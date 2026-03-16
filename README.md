@@ -73,6 +73,13 @@ pip install -r requirements.txt
 3. Install `LLaMA-Factory` separately and ensure `llamafactory-cli` is available in your shell.
 4. This repository does not vendor LLaMA-Factory internals; it only provides project-specific configs, scripts, and data adapters.
 
+Example checks:
+
+```bash
+llamafactory-cli --help
+python scripts/prepare_sft_data.py
+```
+
 ## Data Preparation
 
 Convert raw/mock customer-support records into validated and normalized
@@ -112,8 +119,34 @@ The Stage 1 pipeline is strict:
 
 ## SFT Workflow
 
+Stage 2 keeps SFT config-driven through LLaMA-Factory.
+
+Available SFT configs:
+
+- `configs/llamafactory/sft/smoke.yaml`
+- `configs/llamafactory/sft/qwen3_8b_lora.yaml`
+- `configs/llamafactory/sft/qwen3_8b_qlora.yaml`
+
+Launch examples:
+
 ```bash
-bash scripts/launch_sft.sh configs/llamafactory/sft/qwen3_8b_lora_sft.yaml
+# quick smoke run
+bash scripts/launch_sft.sh configs/llamafactory/sft/smoke.yaml
+
+# default LoRA run for Qwen3-8B
+bash scripts/launch_sft.sh configs/llamafactory/sft/qwen3_8b_lora.yaml
+
+# QLoRA run
+bash scripts/launch_sft.sh configs/llamafactory/sft/qwen3_8b_qlora.yaml
+
+# preview command without execution
+DRY_RUN=1 bash scripts/launch_sft.sh configs/llamafactory/sft/smoke.yaml
+```
+
+Model export example:
+
+```bash
+DRY_RUN=1 bash scripts/export_model.sh configs/llamafactory/sft/qwen3_8b_lora.yaml
 ```
 
 ## DPO Workflow
@@ -141,6 +174,9 @@ Notes:
 Expected output locations:
 
 - training outputs: `outputs/`
+- SFT smoke artifacts: `outputs/sft/smoke/`
+- SFT LoRA artifacts: `outputs/sft/qwen3_8b_lora/`
+- SFT QLoRA artifacts: `outputs/sft/qwen3_8b_qlora/`
 - evaluation results: `reports/experiments/`
 - badcase summaries: `reports/badcases/`
 
@@ -148,7 +184,8 @@ Expected output locations:
 
 - Stage 0 scaffold: completed
 - Stage 1 data layer: completed (schema, validation, normalization, conversion, split)
-- Stage 2+ implementation: incremental TODO
+- Stage 2 SFT experiment layer: completed (LLaMA-Factory configs + wrappers + smoke checks)
+- Stage 3+ implementation: incremental TODO
 
 ## Limitations
 

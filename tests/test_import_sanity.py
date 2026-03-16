@@ -1,6 +1,7 @@
 def test_import_utils() -> None:
     import src.utils.config  # noqa: F401
     import src.utils.jsonl  # noqa: F401
+    import src.utils.llamafactory  # noqa: F401
     import src.utils.paths  # noqa: F401
 
 

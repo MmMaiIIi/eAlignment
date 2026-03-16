@@ -1,7 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONFIG_PATH="${1:-configs/llamafactory/sft/qwen3_8b_lora_sft.yaml}"
+CONFIG_PATH="${1:-configs/llamafactory/sft/smoke.yaml}"
+CLI_BIN="${LLAMAFACTORY_CLI:-llamafactory-cli}"
+DRY_RUN="${DRY_RUN:-0}"
 
-echo "Launching SFT with config: ${CONFIG_PATH}"
-llamafactory-cli train "${CONFIG_PATH}"
+if [[ ! -f "${CONFIG_PATH}" ]]; then
+  echo "Config not found: ${CONFIG_PATH}" >&2
+  exit 1
+fi
+
+CMD=("${CLI_BIN}" train "${CONFIG_PATH}")
+echo "Launching SFT command: ${CMD[*]}"
+
+if [[ "${DRY_RUN}" == "1" ]]; then
+  exit 0
+fi
+
+"${CMD[@]}"
