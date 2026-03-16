@@ -1,0 +1,8 @@
+name: stage0_proxy_eval
+proxy_checks:
+  - polite_tone
+  - actionable_next_step
+  - avoids_blame
+badcase_threshold: 0.67
+input_predictions: data/synthetic/eval_predictions.jsonl
+output_results: reports/experiments/latest_eval.jsonl
