@@ -157,17 +157,53 @@ bash scripts/launch_dpo.sh configs/llamafactory/dpo/qwen3_8b_lora_dpo.yaml
 
 ## Evaluation Workflow
 
-Run proxy-rule evaluation and write per-sample scores:
+Stage 3 evaluation supports side-by-side base vs SFT comparison using prepared prediction JSONL files.
+
+Default synthetic comparison inputs:
+
+- `data/synthetic/eval_base_predictions.jsonl`
+- `data/synthetic/eval_sft_predictions.jsonl`
+
+`eval_sft_predictions.jsonl` can come from either:
+
+- a full SFT checkpoint
+- adapter-based inference output (LoRA/QLoRA)
+
+Run evaluation:
 
 ```bash
-python scripts/run_eval.py --predictions data/synthetic/eval_predictions.jsonl
-python scripts/summarize_badcases.py --eval-file reports/experiments/latest_eval.jsonl
+python scripts/run_eval.py \
+  --config configs/eval/comparison_eval.yaml \
+  --base-predictions data/synthetic/eval_base_predictions.jsonl \
+  --sft-predictions data/synthetic/eval_sft_predictions.jsonl \
+  --output-dir reports/experiments/latest_eval
+
+python scripts/summarize_badcases.py \
+  --badcase-file reports/experiments/latest_eval/badcases.jsonl \
+  --output-md reports/badcases/latest_badcases.md
 ```
 
-Notes:
+Generated outputs:
 
-- Current evaluation is proxy-based and rule-based (not human preference gold scoring).
-- Proxy metrics are explicitly marked as proxies.
+- `reports/experiments/latest_eval/summary.json`
+- `reports/experiments/latest_eval/per_sample.jsonl`
+- `reports/experiments/latest_eval/badcases.jsonl`
+- `reports/experiments/latest_eval/report.md`
+
+Evaluation dimensions:
+
+- actionability
+- politeness/tone
+- policy compliance
+- low-quality/repetition risk
+- category-level breakdown
+- base vs SFT delta and win counts
+
+Metric interpretation:
+
+- exact metrics: response length, token count, repetition ratio
+- proxy metrics: actionability/politeness/policy/quality rule-based heuristics
+- proxy metrics are directional signals, not benchmark ground truth
 
 ## Experiment Outputs
 
@@ -185,7 +221,8 @@ Expected output locations:
 - Stage 0 scaffold: completed
 - Stage 1 data layer: completed (schema, validation, normalization, conversion, split)
 - Stage 2 SFT experiment layer: completed (LLaMA-Factory configs + wrappers + smoke checks)
-- Stage 3+ implementation: incremental TODO
+- Stage 3 evaluation layer: completed (comparison pipeline + badcase collection + reports)
+- Stage 4+ implementation: incremental TODO
 
 ## Limitations
 

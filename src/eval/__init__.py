@@ -1,1 +1,1 @@
-"""Evaluation helpers and proxy metrics."""
+"""Evaluation helpers for proxy scoring, comparison, and badcase collection."""

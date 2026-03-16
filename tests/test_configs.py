@@ -15,6 +15,7 @@ OTHER_CONFIGS = [
     Path("configs/data/preference_schema.yaml"),
     Path("configs/data/split.yaml"),
     Path("configs/eval/proxy_eval.yaml"),
+    Path("configs/eval/comparison_eval.yaml"),
     Path("configs/llamafactory/dpo/qwen3_8b_lora_dpo.yaml"),
 ]
 
@@ -47,3 +48,9 @@ def test_lora_and_qlora_specific_fields() -> None:
     assert lora["finetuning_type"] == "lora"
     assert qlora["finetuning_type"] == "lora"
     assert int(qlora["quantization_bit"]) == 4
+
+
+def test_eval_comparison_config_fields() -> None:
+    cfg = load_yaml_config(Path("configs/eval/comparison_eval.yaml"))
+    for key in ["base_predictions", "sft_predictions", "low_score_threshold", "regression_threshold"]:
+        assert key in cfg

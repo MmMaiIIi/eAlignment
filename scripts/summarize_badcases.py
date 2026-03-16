@@ -3,19 +3,21 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.utils.jsonl import read_jsonl
-from src.utils.paths import from_root
+from src.utils.jsonl import read_jsonl  # noqa: E402
+from src.utils.paths import from_root  # noqa: E402
 
 
-def summarize(rows: List[Dict[str, object]], top_k: int) -> str:
+def summarize(rows: list[dict[str, Any]], top_k: int) -> str:
     badcases = [row for row in rows if bool(row.get("is_badcase", False))]
-    badcases.sort(key=lambda row: float(row["proxy"]["score"]))  # type: ignore[index]
+    badcases.sort(
+        key=lambda row: float(row.get("sft", {}).get("proxy_metrics", {}).get("proxy_score", 1.0))
+    )
     selected = badcases[:top_k]
 
     lines = [
@@ -25,35 +27,41 @@ def summarize(rows: List[Dict[str, object]], top_k: int) -> str:
         f"- badcases: {len(badcases)}",
         "",
     ]
-
     for idx, row in enumerate(selected, start=1):
-        proxy = row["proxy"]  # type: ignore[assignment]
+        sft = row.get("sft", {})
         lines.extend(
             [
                 f"## Case {idx}",
                 f"- id: {row.get('id', '')}",
                 f"- category: {row.get('category', '')}",
-                f"- score: {float(proxy['score']):.4f}",
+                f"- proxy_score: {float(sft.get('proxy_metrics', {}).get('proxy_score', 0.0)):.4f}",
+                f"- reasons: {', '.join(row.get('badcase_reasons', []))}",
                 f"- prompt: {row.get('prompt', '')}",
-                f"- response: {row.get('response', '')}",
+                f"- sft_response: {sft.get('response', '')}",
                 "",
             ]
         )
+    if not selected:
+        lines.append("- No badcases available.")
     return "\n".join(lines)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Summarize low-scoring proxy badcases.")
+    parser = argparse.ArgumentParser(description="Summarize Stage 3 badcases.")
     parser.add_argument(
-        "--eval-file", type=Path, default=from_root("reports", "experiments", "latest_eval.jsonl")
+        "--badcase-file",
+        type=Path,
+        default=from_root("reports", "experiments", "latest_eval", "badcases.jsonl"),
     )
     parser.add_argument(
-        "--output-md", type=Path, default=from_root("reports", "badcases", "latest_badcases.md")
+        "--output-md",
+        type=Path,
+        default=from_root("reports", "badcases", "latest_badcases.md"),
     )
     parser.add_argument("--top-k", type=int, default=10)
     args = parser.parse_args()
 
-    rows = read_jsonl(args.eval_file)
+    rows = read_jsonl(args.badcase_file)
     markdown = summarize(rows, args.top_k)
     args.output_md.parent.mkdir(parents=True, exist_ok=True)
     args.output_md.write_text(markdown, encoding="utf-8")

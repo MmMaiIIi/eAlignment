@@ -6,7 +6,9 @@ def test_import_utils() -> None:
 
 
 def test_import_eval_rules() -> None:
+    import src.eval.comparison  # noqa: F401
     import src.eval.proxy_rules  # noqa: F401
+    import src.eval.scoring  # noqa: F401
 
 
 def test_import_data_modules() -> None:

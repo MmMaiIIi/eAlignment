@@ -1,20 +1,15 @@
 from typing import Dict
 
-
-POLITE_MARKERS = ["sorry", "understand", "please"]
-ACTION_MARKERS = ["order number", "photo", "check", "update", "next step", "help"]
-BLAME_MARKERS = ["not my fault", "your fault", "cannot help", "ask someone else"]
+from src.eval.scoring import evaluate_response_quality
 
 
 def score_response(response: str) -> Dict[str, float]:
-    text = response.lower()
-    polite_tone = float(any(marker in text for marker in POLITE_MARKERS))
-    actionable_next_step = float(any(marker in text for marker in ACTION_MARKERS))
-    avoids_blame = float(not any(marker in text for marker in BLAME_MARKERS))
-    score = (polite_tone + actionable_next_step + avoids_blame) / 3.0
+    """Backward-compatible proxy interface from Stage 0/1."""
+    evaluated = evaluate_response_quality(response)
+    proxy = evaluated.proxy
     return {
-        "polite_tone": polite_tone,
-        "actionable_next_step": actionable_next_step,
-        "avoids_blame": avoids_blame,
-        "score": score,
+        "polite_tone": proxy["politeness_tone"],
+        "actionable_next_step": proxy["actionability"],
+        "avoids_blame": proxy["policy_compliance"],
+        "score": proxy["proxy_score"],
     }

@@ -23,3 +23,10 @@ def test_raw_mock_assets_readable() -> None:
     dpo_rows = read_jsonl(from_root("data", "raw", "mock_dpo_raw.jsonl"))
     assert len(sft_rows) >= 1
     assert len(dpo_rows) >= 1
+
+
+def test_eval_comparison_assets_readable() -> None:
+    base_rows = read_jsonl(from_root("data", "synthetic", "eval_base_predictions.jsonl"))
+    sft_rows = read_jsonl(from_root("data", "synthetic", "eval_sft_predictions.jsonl"))
+    assert len(base_rows) == len(sft_rows)
+    assert len(base_rows) >= 1
