@@ -75,7 +75,8 @@ pip install -r requirements.txt
 
 ## Data Preparation
 
-Generate LLaMA-Factory-ready processed datasets from synthetic examples:
+Convert raw/mock customer-support records into validated and normalized
+LLaMA-Factory-ready datasets:
 
 ```bash
 python scripts/prepare_sft_data.py
@@ -84,9 +85,30 @@ python scripts/prepare_dpo_data.py
 
 Generated files:
 
+- `data/processed/sft_all.jsonl`
 - `data/processed/sft_train.jsonl`
+- `data/processed/sft_dev.jsonl`
+- `data/processed/sft_test.jsonl`
+- `data/processed/dpo_all.jsonl`
 - `data/processed/dpo_train.jsonl`
+- `data/processed/dpo_dev.jsonl`
+- `data/processed/dpo_test.jsonl`
 - `data/processed/dataset_info.json`
+- `data/interim/sft_rejected.jsonl`
+- `data/interim/dpo_rejected.jsonl`
+
+Raw/mock inputs for smoke runs:
+
+- `data/raw/mock_sft_raw.jsonl`
+- `data/raw/mock_dpo_raw.jsonl`
+
+The Stage 1 pipeline is strict:
+
+- normalizes category aliases to canonical values
+- validates required schema fields
+- rejects malformed records with explicit error reasons
+- preserves metadata (`id`, `category`, `source`, `source_id`)
+- splits valid records into train/dev/test using `configs/data/split.yaml`
 
 ## SFT Workflow
 
@@ -124,14 +146,15 @@ Expected output locations:
 
 ## Current Stage Status
 
-- Stage 0 scaffold: in place
-- Stage 1+ implementation: incremental TODO
+- Stage 0 scaffold: completed
+- Stage 1 data layer: completed (schema, validation, normalization, conversion, split)
+- Stage 2+ implementation: incremental TODO
 
 ## Limitations
 
 - No full training run is executed in this scaffold.
 - Evaluation currently uses lightweight proxy checks.
-- Synthetic data is small and intended for smoke tests only.
+- Mock/raw data is small and intended for smoke tests only.
 
 ## Interview Talking Points
 

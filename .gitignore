@@ -38,8 +38,7 @@ outputs/
 logs/
 tmp/
 
-# Data artifacts that can be regenerated
-data/interim/*
-data/processed/*
-!data/interim/.gitkeep
-!data/processed/.gitkeep
+# Large data artifacts (keep small mock assets tracked)
+data/raw/*.parquet
+data/interim/*.parquet
+data/processed/*.parquet

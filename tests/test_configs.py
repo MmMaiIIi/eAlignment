@@ -8,6 +8,7 @@ def test_yaml_configs_load() -> None:
     config_paths = [
         Path("configs/data/sft_schema.yaml"),
         Path("configs/data/preference_schema.yaml"),
+        Path("configs/data/split.yaml"),
         Path("configs/eval/proxy_eval.yaml"),
         Path("configs/llamafactory/sft/qwen3_8b_lora_sft.yaml"),
         Path("configs/llamafactory/dpo/qwen3_8b_lora_dpo.yaml"),

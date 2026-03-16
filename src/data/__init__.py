@@ -1,1 +1,1 @@
-"""Data helpers for schema checks and conversion."""
+"""Data helpers for schema checks, normalization, and conversion."""
