@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from src.utils.jsonl import read_jsonl
+from src.utils.config import load_yaml_config
 
 
 def test_prepare_sft_smoke(tmp_path: Path) -> None:
@@ -36,6 +37,7 @@ def test_prepare_sft_smoke(tmp_path: Path) -> None:
 def test_prepare_dpo_smoke(tmp_path: Path) -> None:
     output_dir = tmp_path / "processed"
     rejected_path = tmp_path / "interim" / "dpo_rejected.jsonl"
+    quality_path = tmp_path / "interim" / "dpo_quality_report.json"
     info_path = output_dir / "dataset_info.json"
     cmd = [
         sys.executable,
@@ -46,6 +48,8 @@ def test_prepare_dpo_smoke(tmp_path: Path) -> None:
         str(output_dir),
         "--rejected-output",
         str(rejected_path),
+        "--quality-output",
+        str(quality_path),
         "--split-config",
         "configs/data/split.yaml",
         "--dataset-info",
@@ -63,3 +67,8 @@ def test_prepare_dpo_smoke(tmp_path: Path) -> None:
     assert len(train_rows) + len(dev_rows) + len(test_rows) == len(all_rows)
     assert all("category" in row and "source" in row for row in all_rows)
     assert info_path.exists()
+    quality = load_yaml_config(quality_path)
+    assert quality["dataset"] == "dpo"
+    assert "issue_counts" in quality
+    assert "duplicate_patterns" in quality
+    assert "category_imbalance" in quality

@@ -15,6 +15,18 @@ SFT_REQUIRED_FIELDS = [
     "output_dir",
 ]
 
+DPO_REQUIRED_FIELDS = [
+    "stage",
+    "do_train",
+    "model_name_or_path",
+    "template",
+    "finetuning_type",
+    "dataset",
+    "dataset_dir",
+    "pref_beta",
+    "output_dir",
+]
+
 
 def build_lf_command(action: str, config_path: str | Path, cli_bin: str = "llamafactory-cli") -> list[str]:
     return [cli_bin, action, str(config_path)]
@@ -28,5 +40,13 @@ def build_export_command(config_path: str | Path, cli_bin: str = "llamafactory-c
     return build_lf_command("export", config_path, cli_bin=cli_bin)
 
 
+def build_dpo_train_command(config_path: str | Path, cli_bin: str = "llamafactory-cli") -> list[str]:
+    return build_lf_command("train", config_path, cli_bin=cli_bin)
+
+
 def missing_required_sft_fields(config: dict[str, Any]) -> list[str]:
     return [field for field in SFT_REQUIRED_FIELDS if field not in config]
+
+
+def missing_required_dpo_fields(config: dict[str, Any]) -> list[str]:
+    return [field for field in DPO_REQUIRED_FIELDS if field not in config]

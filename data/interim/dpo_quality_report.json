@@ -1,0 +1,30 @@
+{
+  "dataset": "dpo",
+  "total_raw": 6,
+  "valid": 4,
+  "rejected": 2,
+  "valid_ratio": 0.6666666666666666,
+  "issue_counts": {
+    "empty_chosen_or_rejected": 1,
+    "chosen_identical_to_rejected": 1,
+    "malformed_examples": 2
+  },
+  "category_distribution": {
+    "complaint_soothing": 1,
+    "returns_refunds": 1,
+    "shipping_logistics": 1,
+    "order_modification": 1
+  },
+  "category_imbalance": {
+    "max_count": 1,
+    "min_count": 1,
+    "imbalance_ratio": 1.0,
+    "flagged": false
+  },
+  "duplicate_patterns": {
+    "duplicate_prompt_groups": 0,
+    "duplicate_pair_groups": 0,
+    "duplicate_prompt_examples": [],
+    "duplicate_pair_examples": []
+  }
+}

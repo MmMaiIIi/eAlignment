@@ -151,8 +151,46 @@ DRY_RUN=1 bash scripts/export_model.sh configs/llamafactory/sft/qwen3_8b_lora.ya
 
 ## DPO Workflow
 
+Preference data format (normalized JSONL):
+
+```json
+{
+  "id": "pref_0001",
+  "category": "complaint_soothing",
+  "prompt": "Customer: Your delivery is late again.",
+  "chosen": "I am sorry for the delay. Please share your order number and I will check the latest status.",
+  "rejected": "Wait patiently."
+}
+```
+
+Preference quality checks in `scripts/prepare_dpo_data.py` include:
+
+- empty `chosen` / `rejected`
+- identical `chosen` and `rejected`
+- malformed examples (schema/field issues)
+- category imbalance analysis
+- duplicate prompt/pair pattern analysis
+
+Generated quality report:
+
+- `data/interim/dpo_quality_report.json`
+
+Available DPO configs:
+
+- `configs/llamafactory/dpo/smoke.yaml`
+- `configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml`
+
+Launch examples:
+
 ```bash
-bash scripts/launch_dpo.sh configs/llamafactory/dpo/qwen3_8b_lora_dpo.yaml
+# quick smoke run
+bash scripts/launch_dpo.sh configs/llamafactory/dpo/smoke.yaml
+
+# default LoRA DPO run for Qwen3-8B
+bash scripts/launch_dpo.sh configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml
+
+# preview command without execution
+DRY_RUN=1 bash scripts/launch_dpo.sh configs/llamafactory/dpo/smoke.yaml
 ```
 
 ## Evaluation Workflow
@@ -213,6 +251,8 @@ Expected output locations:
 - SFT smoke artifacts: `outputs/sft/smoke/`
 - SFT LoRA artifacts: `outputs/sft/qwen3_8b_lora/`
 - SFT QLoRA artifacts: `outputs/sft/qwen3_8b_qlora/`
+- DPO smoke artifacts: `outputs/dpo/smoke/`
+- DPO LoRA artifacts: `outputs/dpo/qwen3_8b_dpo_lora/`
 - evaluation results: `reports/experiments/`
 - badcase summaries: `reports/badcases/`
 
@@ -222,7 +262,8 @@ Expected output locations:
 - Stage 1 data layer: completed (schema, validation, normalization, conversion, split)
 - Stage 2 SFT experiment layer: completed (LLaMA-Factory configs + wrappers + smoke checks)
 - Stage 3 evaluation layer: completed (comparison pipeline + badcase collection + reports)
-- Stage 4+ implementation: incremental TODO
+- Stage 4 preference + DPO layer: completed (quality checks + DPO configs + wrappers + smoke checks)
+- Stage 5 implementation: incremental TODO
 
 ## Limitations
 

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from src.utils.config import load_yaml_config
-from src.utils.llamafactory import missing_required_sft_fields
+from src.utils.llamafactory import missing_required_dpo_fields, missing_required_sft_fields
 
 SFT_CONFIGS = [
     Path("configs/llamafactory/sft/smoke.yaml"),
@@ -17,6 +17,8 @@ OTHER_CONFIGS = [
     Path("configs/eval/proxy_eval.yaml"),
     Path("configs/eval/comparison_eval.yaml"),
     Path("configs/llamafactory/dpo/qwen3_8b_lora_dpo.yaml"),
+    Path("configs/llamafactory/dpo/smoke.yaml"),
+    Path("configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml"),
 ]
 
 
@@ -54,3 +56,14 @@ def test_eval_comparison_config_fields() -> None:
     cfg = load_yaml_config(Path("configs/eval/comparison_eval.yaml"))
     for key in ["base_predictions", "sft_predictions", "low_score_threshold", "regression_threshold"]:
         assert key in cfg
+
+
+def test_dpo_configs_have_required_fields() -> None:
+    for path in [
+        Path("configs/llamafactory/dpo/smoke.yaml"),
+        Path("configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml"),
+    ]:
+        cfg = load_yaml_config(path)
+        missing = missing_required_dpo_fields(cfg)
+        assert not missing, f"{path} missing fields: {missing}"
+        assert cfg["stage"] == "dpo"

@@ -16,5 +16,6 @@ def test_import_data_modules() -> None:
     import src.data.normalization  # noqa: F401
     import src.data.parsers  # noqa: F401
     import src.data.pipeline  # noqa: F401
+    import src.data.preference_quality  # noqa: F401
     import src.data.schemas  # noqa: F401
     import src.data.splitting  # noqa: F401

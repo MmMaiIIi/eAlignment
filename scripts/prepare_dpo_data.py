@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.data.pipeline import process_preference_raw_records
+from src.data.preference_quality import analyze_preference_quality
 from src.utils.config import load_yaml_config
 from src.utils.jsonl import read_jsonl, write_jsonl
 from src.utils.paths import from_root
@@ -44,6 +45,7 @@ def prepare(
     input_path: Path,
     output_dir: Path,
     rejected_output: Path,
+    quality_output: Path,
     split_config_path: Path,
     source_name: str,
     fail_on_invalid: bool,
@@ -73,6 +75,12 @@ def prepare(
     write_jsonl(output_dir / "dpo_test.jsonl", splits["test"])
     write_jsonl(rejected_output, rejected_records)
 
+    quality_report = analyze_preference_quality(
+        raw_count=len(raw_records), valid_records=valid_records, rejected_records=rejected_records
+    )
+    quality_output.parent.mkdir(parents=True, exist_ok=True)
+    quality_output.write_text(json.dumps(quality_report, ensure_ascii=False, indent=2), encoding="utf-8")
+
     summary = {
         "dataset": "dpo",
         "input": str(input_path),
@@ -82,6 +90,7 @@ def prepare(
         "train": len(splits["train"]),
         "dev": len(splits["dev"]),
         "test": len(splits["test"]),
+        "quality_report": str(quality_output),
     }
     return summary
 
@@ -92,6 +101,12 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=from_root("data", "processed"))
     parser.add_argument(
         "--rejected-output", type=Path, default=from_root("data", "interim", "dpo_rejected.jsonl")
+    )
+    parser.add_argument(
+        "--quality-output",
+        type=Path,
+        default=from_root("data", "interim", "dpo_quality_report.json"),
+        help="Path to write preference-data quality report.",
     )
     parser.add_argument(
         "--split-config", type=Path, default=from_root("configs", "data", "split.yaml")
@@ -110,6 +125,7 @@ def main() -> None:
         input_path=args.input,
         output_dir=args.output_dir,
         rejected_output=args.rejected_output,
+        quality_output=args.quality_output,
         split_config_path=args.split_config,
         source_name=args.source_name,
         fail_on_invalid=args.fail_on_invalid,
