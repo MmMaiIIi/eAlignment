@@ -25,11 +25,26 @@ if [[ ! -f "${CONFIG_PATH}" ]]; then
   exit 1
 fi
 
+USE_TORCHRUN="${FORCE_TORCHRUN:-0}"
+
+if grep -Eq '^[[:space:]]*deepspeed[[:space:]]*:' "${CONFIG_PATH}"; then
+  USE_TORCHRUN=1
+fi
+
 CMD=("${CLI_BIN}" train "${CONFIG_PATH}")
-echo "Launching SFT (${PROFILE_OR_CONFIG}) command: ${CMD[*]}"
+
+if [[ "${USE_TORCHRUN}" == "1" ]]; then
+  echo "Launching SFT (${PROFILE_OR_CONFIG}) command: FORCE_TORCHRUN=1 ${CMD[*]}"
+else
+  echo "Launching SFT (${PROFILE_OR_CONFIG}) command: ${CMD[*]}"
+fi
 
 if [[ "${DRY_RUN}" == "1" ]]; then
   exit 0
 fi
 
-"${CMD[@]}"
+if [[ "${USE_TORCHRUN}" == "1" ]]; then
+  FORCE_TORCHRUN=1 "${CMD[@]}"
+else
+  "${CMD[@]}"
+fi
