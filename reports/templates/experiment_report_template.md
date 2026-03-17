@@ -8,6 +8,7 @@
 - base_model:
 - framework:
 - config_path:
+- run_type: verified / expected
 
 ## Data
 
@@ -20,6 +21,7 @@
 - key_metrics:
 - proxy_metrics:
 - observations:
+- unresolved_risks:
 
 ## Badcases
 

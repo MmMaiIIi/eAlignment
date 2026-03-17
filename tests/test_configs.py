@@ -16,7 +16,7 @@ OTHER_CONFIGS = [
     Path("configs/data/split.yaml"),
     Path("configs/eval/proxy_eval.yaml"),
     Path("configs/eval/comparison_eval.yaml"),
-    Path("configs/llamafactory/dpo/qwen3_8b_lora_dpo.yaml"),
+    Path("configs/eval/ablation_matrix.yaml"),
     Path("configs/llamafactory/dpo/smoke.yaml"),
     Path("configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml"),
 ]
@@ -67,3 +67,12 @@ def test_dpo_configs_have_required_fields() -> None:
         missing = missing_required_dpo_fields(cfg)
         assert not missing, f"{path} missing fields: {missing}"
         assert cfg["stage"] == "dpo"
+
+
+def test_ablation_matrix_structure() -> None:
+    cfg = load_yaml_config(Path("configs/eval/ablation_matrix.yaml"))
+    assert isinstance(cfg.get("experiments"), list)
+    assert len(cfg["experiments"]) >= 5
+    for exp in cfg["experiments"]:
+        for key in ["id", "title", "objective", "train"]:
+            assert key in exp

@@ -243,6 +243,40 @@ Metric interpretation:
 - proxy metrics: actionability/politeness/policy/quality rule-based heuristics
 - proxy metrics are directional signals, not benchmark ground truth
 
+## Ablation And Badcase Workflow
+
+Generate a lightweight ablation plan (no auto-training):
+
+```bash
+python scripts/plan_ablations.py \
+  --config configs/eval/ablation_matrix.yaml \
+  --output-md reports/experiments/ablation_plan.md \
+  --output-json reports/experiments/ablation_plan.json \
+  --check-paths
+```
+
+Badcase workflow references:
+
+- `reports/badcases/WORKFLOW.md`
+- `reports/templates/badcase_analysis_template.md`
+- ablation templates in `reports/templates/ablation_*.md`
+
+This keeps Stage 5 interview-ready analysis reproducible without building a heavy platform.
+
+## Reproducibility Notes
+
+Verified in this repository:
+
+- data preparation scripts run on mock data
+- eval pipeline and badcase extraction run on synthetic predictions
+- config and command-construction smoke tests pass
+
+Expected but environment-dependent:
+
+- full SFT training through `llamafactory-cli train ...`
+- full DPO training through `llamafactory-cli train ...`
+- model export and full checkpoint evaluation on GPU infrastructure
+
 ## Experiment Outputs
 
 Expected output locations:
@@ -263,7 +297,7 @@ Expected output locations:
 - Stage 2 SFT experiment layer: completed (LLaMA-Factory configs + wrappers + smoke checks)
 - Stage 3 evaluation layer: completed (comparison pipeline + badcase collection + reports)
 - Stage 4 preference + DPO layer: completed (quality checks + DPO configs + wrappers + smoke checks)
-- Stage 5 implementation: incremental TODO
+- Stage 5 project polish: completed (ablation planning + badcase/report templates + reproducibility docs)
 
 ## Limitations
 

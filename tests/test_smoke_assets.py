@@ -30,3 +30,17 @@ def test_eval_comparison_assets_readable() -> None:
     sft_rows = read_jsonl(from_root("data", "synthetic", "eval_sft_predictions.jsonl"))
     assert len(base_rows) == len(sft_rows)
     assert len(base_rows) >= 1
+
+
+def test_reporting_templates_exist() -> None:
+    required = [
+        from_root("reports", "badcases", "WORKFLOW.md"),
+        from_root("reports", "templates", "badcase_analysis_template.md"),
+        from_root("reports", "templates", "ablation_base_vs_sft.md"),
+        from_root("reports", "templates", "ablation_sft_vs_sft_dpo.md"),
+        from_root("reports", "templates", "ablation_lora_vs_qlora.md"),
+        from_root("reports", "templates", "ablation_dpo_beta_comparison.md"),
+        from_root("reports", "templates", "ablation_preference_quality_sensitivity.md"),
+    ]
+    for path in required:
+        assert path.exists()
