@@ -1,313 +1,216 @@
-# eAlignment: Interview-Ready LLM Alignment Project
+# ecommerce-support-alignment
 
-This repository contains a framework-first alignment project for Chinese e-commerce customer support.
+Framework-first LLM alignment project for Chinese e-commerce customer support.
 
-It is built around mature open-source frameworks instead of reimplementing training logic:
+## What This Project Does
 
-- Base model: `Qwen/Qwen3-8B`
-- Primary training entrypoint: `LLaMA-Factory`
-- Core stack: `transformers`, `trl`, `peft`, `accelerate`, `deepspeed`
+This repository provides a compact, reproducible workflow for:
 
-## Why LLaMA-Factory
+- SFT data preparation
+- preference data preparation for DPO
+- LLaMA-Factory launch paths for SFT and DPO
+- offline evaluation (base vs tuned)
+- badcase collection
+- ablation planning/report templates
 
-The project focuses on practical adaptation work:
+Target domains:
 
-- data preparation and schema validation
-- configuration-driven SFT/DPO experiments
-- evaluation and badcase analysis
-- reproducible scripts and reports
+- returns/refunds
+- shipping/logistics
+- product specs
+- order modification
+- after-sales
+- complaint soothing
 
-Custom trainer, custom LoRA injection, and custom DPO loss code are intentionally out of scope.
+## Why LLaMA-Factory (Not Custom Trainer Code)
 
-## Repository Structure
+Training internals are delegated to **LLaMA-Factory** by design:
+
+- no custom SFT trainer
+- no custom DPO trainer/loss
+- no custom LoRA/QLoRA internals
+- no custom distributed runtime
+
+This repo owns only project-specific adaptation logic.
+
+## Architecture In One Paragraph
+
+The repository follows a shallow path: `runs -> scripts -> align`.  
+`align/` holds reusable data/eval logic, `scripts/` are explicit CLI entrypoints, and `runs/` are short reproducible command bundles. Config is compressed around a small **profile** knob with strong defaults.
+
+## Main Execution Path
+
+1. Prepare SFT data: `scripts/prepare_data.py`
+2. Prepare preference data: `scripts/prepare_pref.py`
+3. Launch SFT/DPO through LLaMA-Factory: `scripts/launch_sft.sh`, `scripts/launch_dpo.sh`
+4. Run offline eval: `scripts/eval.py`
+5. Summarize badcases: `scripts/badcases.py`
+
+## Directory Tree
 
 ```text
 .
-+-- AGENTS.md
-+-- README.md
-+-- requirements.txt
-+-- pyproject.toml
-+-- configs/
-|   +-- llamafactory/
-|   |   +-- sft/
-|   |   +-- dpo/
-|   |   +-- deepspeed/
-|   +-- data/
-|   +-- eval/
-+-- data/
-|   +-- raw/
-|   +-- interim/
-|   +-- processed/
-|   +-- synthetic/
-+-- scripts/
-+-- src/
-|   +-- data/
-|   +-- eval/
-|   +-- prompts/
-|   +-- utils/
-+-- reports/
-|   +-- templates/
-|   +-- experiments/
-|   +-- badcases/
-+-- tests/
+├── AGENTS.md
+├── README.md
+├── requirements.txt
+├── pyproject.toml
+├── runs/
+├── scripts/
+├── align/
+├── configs/
+├── data/
+├── reports/
+├── dev/
+└── tests/
 ```
 
-## Stage Roadmap
-
-- Stage 0: repository scaffold, dependencies, synthetic seeds, smoke checks
-- Stage 1: schema validation and normalization/conversion scripts
-- Stage 2: SFT experiment configs and launch wrappers
-- Stage 3: evaluation pipeline, comparison flow, badcase collection
-- Stage 4: preference pipeline and DPO configs
-- Stage 5: ablations, final reports, interview packaging
-
-## Setup
-
-1. Create a Python environment (`3.10+` recommended).
-2. Install dependencies:
+## Quickstart
 
 ```bash
 pip install -r requirements.txt
+python scripts/prepare_data.py --profile smoke
 ```
 
-3. Install `LLaMA-Factory` separately and ensure `llamafactory-cli` is available in your shell.
-4. This repository does not vendor LLaMA-Factory internals; it only provides project-specific configs, scripts, and data adapters.
-
-Example checks:
+Shortest working command:
 
 ```bash
-llamafactory-cli --help
-python scripts/prepare_sft_data.py
+bash runs/smoke.sh
 ```
+
+## Setup Assumptions
+
+- Python 3.10+
+- `llamafactory-cli` installed separately and available in shell
+- local environment has permissions to read/write `data/` and `reports/`
+
+Verified in-repo:
+
+- data prep/eval/badcase scripts run on mock/synthetic assets
+- config and command-construction smoke tests
+
+Expected (environment-dependent):
+
+- full GPU SFT/DPO training runs
+- full checkpoint export and large-scale eval
 
 ## Data Preparation
 
-Convert raw/mock customer-support records into validated and normalized
-LLaMA-Factory-ready datasets:
+SFT:
 
 ```bash
-python scripts/prepare_sft_data.py
-python scripts/prepare_dpo_data.py
+python scripts/prepare_data.py --profile smoke
 ```
 
-Generated files:
+Preference:
 
-- `data/processed/sft_all.jsonl`
-- `data/processed/sft_train.jsonl`
-- `data/processed/sft_dev.jsonl`
-- `data/processed/sft_test.jsonl`
-- `data/processed/dpo_all.jsonl`
-- `data/processed/dpo_train.jsonl`
-- `data/processed/dpo_dev.jsonl`
-- `data/processed/dpo_test.jsonl`
+```bash
+python scripts/prepare_pref.py --profile smoke
+```
+
+Outputs:
+
+- `data/processed/sft_{all,train,dev,test}.jsonl`
+- `data/processed/dpo_{all,train,dev,test}.jsonl`
 - `data/processed/dataset_info.json`
 - `data/interim/sft_rejected.jsonl`
 - `data/interim/dpo_rejected.jsonl`
-
-Raw/mock inputs for smoke runs:
-
-- `data/raw/mock_sft_raw.jsonl`
-- `data/raw/mock_dpo_raw.jsonl`
-
-The Stage 1 pipeline is strict:
-
-- normalizes category aliases to canonical values
-- validates required schema fields
-- rejects malformed records with explicit error reasons
-- preserves metadata (`id`, `category`, `source`, `source_id`)
-- splits valid records into train/dev/test using `configs/data/split.yaml`
-
-## SFT Workflow
-
-Stage 2 keeps SFT config-driven through LLaMA-Factory.
-
-Available SFT configs:
-
-- `configs/llamafactory/sft/smoke.yaml`
-- `configs/llamafactory/sft/qwen3_8b_lora.yaml`
-- `configs/llamafactory/sft/qwen3_8b_qlora.yaml`
-
-Launch examples:
-
-```bash
-# quick smoke run
-bash scripts/launch_sft.sh configs/llamafactory/sft/smoke.yaml
-
-# default LoRA run for Qwen3-8B
-bash scripts/launch_sft.sh configs/llamafactory/sft/qwen3_8b_lora.yaml
-
-# QLoRA run
-bash scripts/launch_sft.sh configs/llamafactory/sft/qwen3_8b_qlora.yaml
-
-# preview command without execution
-DRY_RUN=1 bash scripts/launch_sft.sh configs/llamafactory/sft/smoke.yaml
-```
-
-Model export example:
-
-```bash
-DRY_RUN=1 bash scripts/export_model.sh configs/llamafactory/sft/qwen3_8b_lora.yaml
-```
-
-## DPO Workflow
-
-Preference data format (normalized JSONL):
-
-```json
-{
-  "id": "pref_0001",
-  "category": "complaint_soothing",
-  "prompt": "Customer: Your delivery is late again.",
-  "chosen": "I am sorry for the delay. Please share your order number and I will check the latest status.",
-  "rejected": "Wait patiently."
-}
-```
-
-Preference quality checks in `scripts/prepare_dpo_data.py` include:
-
-- empty `chosen` / `rejected`
-- identical `chosen` and `rejected`
-- malformed examples (schema/field issues)
-- category imbalance analysis
-- duplicate prompt/pair pattern analysis
-
-Generated quality report:
-
 - `data/interim/dpo_quality_report.json`
 
-Available DPO configs:
+## SFT
 
-- `configs/llamafactory/dpo/smoke.yaml`
-- `configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml`
-
-Launch examples:
+Dry run:
 
 ```bash
-# quick smoke run
-bash scripts/launch_dpo.sh configs/llamafactory/dpo/smoke.yaml
-
-# default LoRA DPO run for Qwen3-8B
-bash scripts/launch_dpo.sh configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml
-
-# preview command without execution
-DRY_RUN=1 bash scripts/launch_dpo.sh configs/llamafactory/dpo/smoke.yaml
+DRY_RUN=1 bash scripts/launch_sft.sh smoke
 ```
 
-## Evaluation Workflow
-
-Stage 3 evaluation supports side-by-side base vs SFT comparison using prepared prediction JSONL files.
-
-Default synthetic comparison inputs:
-
-- `data/synthetic/eval_base_predictions.jsonl`
-- `data/synthetic/eval_sft_predictions.jsonl`
-
-`eval_sft_predictions.jsonl` can come from either:
-
-- a full SFT checkpoint
-- adapter-based inference output (LoRA/QLoRA)
-
-Run evaluation:
+Actual launch (baseline LoRA):
 
 ```bash
-python scripts/run_eval.py \
-  --config configs/eval/comparison_eval.yaml \
-  --base-predictions data/synthetic/eval_base_predictions.jsonl \
-  --sft-predictions data/synthetic/eval_sft_predictions.jsonl \
-  --output-dir reports/experiments/latest_eval
-
-python scripts/summarize_badcases.py \
-  --badcase-file reports/experiments/latest_eval/badcases.jsonl \
-  --output-md reports/badcases/latest_badcases.md
+bash scripts/launch_sft.sh sft
 ```
 
-Generated outputs:
+QLoRA variant:
+
+```bash
+bash scripts/launch_sft.sh sft_qlora
+```
+
+## DPO
+
+Dry run:
+
+```bash
+DRY_RUN=1 bash scripts/launch_dpo.sh smoke
+```
+
+Actual launch:
+
+```bash
+bash scripts/launch_dpo.sh dpo
+```
+
+## Evaluation
+
+```bash
+python scripts/eval.py --profile eval
+python scripts/badcases.py --profile eval --top-k 10
+```
+
+Outputs:
 
 - `reports/experiments/latest_eval/summary.json`
 - `reports/experiments/latest_eval/per_sample.jsonl`
 - `reports/experiments/latest_eval/badcases.jsonl`
 - `reports/experiments/latest_eval/report.md`
+- `reports/badcases/latest_badcases.md`
 
-Evaluation dimensions:
+## Artifacts
 
-- actionability
-- politeness/tone
-- policy compliance
-- low-quality/repetition risk
-- category-level breakdown
-- base vs SFT delta and win counts
+- Training output roots:
+  - `outputs/sft/...`
+  - `outputs/dpo/...`
+- Eval artifacts: `reports/experiments/latest_eval/`
+- Badcase notes/templates: `reports/badcases/`, `reports/templates/`
+- Ablation plan artifacts:
+  - `reports/experiments/ablation_plan.md`
+  - `reports/experiments/ablation_plan.json`
 
-Metric interpretation:
-
-- exact metrics: response length, token count, repetition ratio
-- proxy metrics: actionability/politeness/policy/quality rule-based heuristics
-- proxy metrics are directional signals, not benchmark ground truth
-
-## Ablation And Badcase Workflow
-
-Generate a lightweight ablation plan (no auto-training):
+## Ablation Planning
 
 ```bash
-python scripts/plan_ablations.py \
-  --config configs/eval/ablation_matrix.yaml \
-  --output-md reports/experiments/ablation_plan.md \
-  --output-json reports/experiments/ablation_plan.json \
-  --check-paths
+python scripts/plan_ablations.py --check-paths
 ```
 
-Badcase workflow references:
+Control file: `configs/ablations.yaml`
 
-- `reports/badcases/WORKFLOW.md`
-- `reports/templates/badcase_analysis_template.md`
-- ablation templates in `reports/templates/ablation_*.md`
+## Where To Modify Core Logic
 
-This keeps Stage 5 interview-ready analysis reproducible without building a heavy platform.
+- Data normalization/validation/splitting: `align/data.py`
+- Evaluation scoring/comparison/badcase extraction: `align/eval.py`
+- Profile/config loading: `align/config.py`
 
-## Reproducibility Notes
+Temporary one-off work belongs in `dev/` only.
 
-Verified in this repository:
+## Design Principles Used In This Rebuild
 
-- data preparation scripts run on mock data
-- eval pipeline and badcase extraction run on synthetic predictions
-- config and command-construction smoke tests pass
-
-Expected but environment-dependent:
-
-- full SFT training through `llamafactory-cli train ...`
-- full DPO training through `llamafactory-cli train ...`
-- model export and full checkpoint evaluation on GPU infrastructure
-
-## Experiment Outputs
-
-Expected output locations:
-
-- training outputs: `outputs/`
-- SFT smoke artifacts: `outputs/sft/smoke/`
-- SFT LoRA artifacts: `outputs/sft/qwen3_8b_lora/`
-- SFT QLoRA artifacts: `outputs/sft/qwen3_8b_qlora/`
-- DPO smoke artifacts: `outputs/dpo/smoke/`
-- DPO LoRA artifacts: `outputs/dpo/qwen3_8b_dpo_lora/`
-- evaluation results: `reports/experiments/`
-- badcase summaries: `reports/badcases/`
-
-## Current Stage Status
-
-- Stage 0 scaffold: completed
-- Stage 1 data layer: completed (schema, validation, normalization, conversion, split)
-- Stage 2 SFT experiment layer: completed (LLaMA-Factory configs + wrappers + smoke checks)
-- Stage 3 evaluation layer: completed (comparison pipeline + badcase collection + reports)
-- Stage 4 preference + DPO layer: completed (quality checks + DPO configs + wrappers + smoke checks)
-- Stage 5 project polish: completed (ablation planning + badcase/report templates + reproducibility docs)
+- framework-first boundary with LLaMA-Factory
+- explicit scripts over hidden orchestration
+- strong defaults over many knobs
+- profile-based control (`smoke`, `sft`, `dpo`, `eval`)
+- low abstraction and short execution path
+- honest verified-vs-expected documentation
 
 ## Limitations
 
-- No full training run is executed in this scaffold.
-- Evaluation currently uses lightweight proxy checks.
-- Mock/raw data is small and intended for smoke tests only.
+- Evaluation metrics are proxy heuristics, not benchmark-grade truth.
+- Included datasets are mock/synthetic and small.
+- No fabricated training results; real gains require actual runs.
 
 ## Interview Talking Points
 
-- Why framework-first integration is more practical than rebuilding training internals
-- How SFT/DPO data schemas are normalized for reproducibility
-- How config-driven experimentation improves traceability
-- How proxy evaluation and badcases guide iteration before costly training
+- Why framework-first beats custom trainer reimplementation for project scope
+- How preference data quality checks reduce DPO noise
+- How side-by-side eval + badcases drive practical iteration
+- How profile compression keeps experimentation fast and reproducible
+

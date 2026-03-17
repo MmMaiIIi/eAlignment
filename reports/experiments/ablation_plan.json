@@ -5,21 +5,21 @@
       "id": "base_vs_sft",
       "title": "Base vs SFT (LoRA)",
       "objective": "Measure alignment gain from supervised fine-tuning.",
-      "train_stage": "sft",
-      "train_config": "configs/llamafactory/sft/qwen3_8b_lora.yaml",
+      "stage": "sft",
+      "train_config": "configs/sft.yaml",
       "train_command": [
         "llamafactory-cli",
         "train",
-        "configs/llamafactory/sft/qwen3_8b_lora.yaml"
+        "configs/sft.yaml"
       ],
       "eval_command": [
         "python",
-        "scripts/run_eval.py",
+        "scripts/eval.py",
         "--config",
-        "configs/eval/comparison_eval.yaml",
-        "--base-predictions",
+        "configs/eval.yaml",
+        "--base",
         "data/synthetic/eval_base_predictions.jsonl",
-        "--sft-predictions",
+        "--tuned",
         "data/synthetic/eval_sft_predictions.jsonl"
       ],
       "notes": "",
@@ -28,22 +28,22 @@
     {
       "id": "sft_vs_sft_dpo",
       "title": "SFT vs SFT+DPO",
-      "objective": "Measure additional preference alignment gain after DPO.",
-      "train_stage": "dpo",
-      "train_config": "configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml",
+      "objective": "Measure incremental gain after preference optimization.",
+      "stage": "dpo",
+      "train_config": "configs/dpo.yaml",
       "train_command": [
         "llamafactory-cli",
         "train",
-        "configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml"
+        "configs/dpo.yaml"
       ],
       "eval_command": [
         "python",
-        "scripts/run_eval.py",
+        "scripts/eval.py",
         "--config",
-        "configs/eval/comparison_eval.yaml",
-        "--base-predictions",
+        "configs/eval.yaml",
+        "--base",
         "data/synthetic/eval_sft_predictions.jsonl",
-        "--sft-predictions",
+        "--tuned",
         "data/synthetic/eval_sft_predictions.jsonl"
       ],
       "notes": "",
@@ -53,21 +53,21 @@
       "id": "lora_vs_qlora",
       "title": "LoRA vs QLoRA",
       "objective": "Compare quality-efficiency tradeoff between LoRA and QLoRA.",
-      "train_stage": "sft",
-      "train_config": "configs/llamafactory/sft/qwen3_8b_qlora.yaml",
+      "stage": "sft",
+      "train_config": "configs/sft_qlora.yaml",
       "train_command": [
         "llamafactory-cli",
         "train",
-        "configs/llamafactory/sft/qwen3_8b_qlora.yaml"
+        "configs/sft_qlora.yaml"
       ],
       "eval_command": [
         "python",
-        "scripts/run_eval.py",
+        "scripts/eval.py",
         "--config",
-        "configs/eval/comparison_eval.yaml",
-        "--base-predictions",
+        "configs/eval.yaml",
+        "--base",
         "data/synthetic/eval_base_predictions.jsonl",
-        "--sft-predictions",
+        "--tuned",
         "data/synthetic/eval_sft_predictions.jsonl"
       ],
       "notes": "",
@@ -76,41 +76,41 @@
     {
       "id": "dpo_beta_comparison",
       "title": "DPO beta sensitivity",
-      "objective": "Compare preference sharpness at different beta values.",
-      "train_stage": "dpo",
-      "train_config": "configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml",
+      "objective": "Compare preference sharpness under different beta settings.",
+      "stage": "dpo",
+      "train_config": "configs/dpo.yaml",
       "train_command": [
         "llamafactory-cli",
         "train",
-        "configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml"
+        "configs/dpo.yaml"
       ],
       "eval_command": [
         "python",
-        "scripts/run_eval.py",
+        "scripts/eval.py",
         "--config",
-        "configs/eval/comparison_eval.yaml"
+        "configs/eval.yaml"
       ],
-      "notes": "Adjust pref_beta and rerun with consistent seeds.",
+      "notes": "Adjust pref_beta, keep other settings fixed, rerun comparison.",
       "missing_paths": []
     },
     {
       "id": "preference_quality_sensitivity",
       "title": "Preference-data quality sensitivity",
-      "objective": "Measure impact of strict vs relaxed filtering on DPO outcomes.",
-      "train_stage": "dpo",
-      "train_config": "configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml",
+      "objective": "Compare strict vs relaxed preference filtering impacts.",
+      "stage": "dpo",
+      "train_config": "configs/dpo.yaml",
       "train_command": [
         "llamafactory-cli",
         "train",
-        "configs/llamafactory/dpo/qwen3_8b_dpo_lora.yaml"
+        "configs/dpo.yaml"
       ],
       "eval_command": [
         "python",
-        "scripts/run_eval.py",
+        "scripts/eval.py",
         "--config",
-        "configs/eval/comparison_eval.yaml"
+        "configs/eval.yaml"
       ],
-      "notes": "Compare runs with and without invalid/duplicate filtering.",
+      "notes": "Change filtering strictness in prepare_pref.py and rerun.",
       "missing_paths": []
     }
   ]

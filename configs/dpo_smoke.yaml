@@ -1,0 +1,21 @@
+stage: dpo
+do_train: true
+model_name_or_path: Qwen/Qwen3-8B
+template: qwen
+finetuning_type: lora
+
+dataset: ecom_pref_seed
+dataset_dir: data/processed
+cutoff_len: 1024
+max_samples: 16
+
+pref_beta: 0.1
+learning_rate: 5.0e-5
+num_train_epochs: 1.0
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 1
+
+logging_steps: 1
+save_steps: 20
+plot_loss: true
+output_dir: outputs/dpo/smoke

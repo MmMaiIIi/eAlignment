@@ -13,7 +13,7 @@ Turn evaluation failures into actionable model/data improvements without buildin
 ## Steps
 
 1. Run evaluation and badcase extraction.
-2. Run `scripts/summarize_badcases.py` to produce a quick shortlist.
+2. Run `scripts/badcases.py` to produce a quick shortlist.
 3. Copy each shortlisted case into `reports/templates/badcase_analysis_template.md`.
 4. Tag root causes:
    - data_gap

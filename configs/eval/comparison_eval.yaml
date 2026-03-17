@@ -1,7 +1,0 @@
-name: stage3_comparison_eval
-
-base_predictions: data/synthetic/eval_base_predictions.jsonl
-sft_predictions: data/synthetic/eval_sft_predictions.jsonl
-
-low_score_threshold: 0.60
-regression_threshold: 0.15

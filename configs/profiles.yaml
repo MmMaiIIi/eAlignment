@@ -1,0 +1,103 @@
+default_profile: smoke
+
+profiles:
+  smoke:
+    split:
+      seed: 42
+      train: 0.8
+      dev: 0.1
+      test: 0.1
+    sft_input: data/raw/mock_sft_raw.jsonl
+    pref_input: data/raw/mock_dpo_raw.jsonl
+    sft_config: configs/sft_smoke.yaml
+    dpo_config: configs/dpo_smoke.yaml
+    eval_config: configs/eval.yaml
+    processed_dir: data/processed
+    sft_rejected: data/interim/sft_rejected.jsonl
+    pref_rejected: data/interim/dpo_rejected.jsonl
+    pref_quality: data/interim/dpo_quality_report.json
+    dataset_info: data/processed/dataset_info.json
+    eval_output_dir: reports/experiments/latest_eval
+    badcase_input: reports/experiments/latest_eval/badcases.jsonl
+    badcase_output: reports/badcases/latest_badcases.md
+
+  sft:
+    split:
+      seed: 42
+      train: 0.8
+      dev: 0.1
+      test: 0.1
+    sft_input: data/raw/mock_sft_raw.jsonl
+    pref_input: data/raw/mock_dpo_raw.jsonl
+    sft_config: configs/sft.yaml
+    dpo_config: configs/dpo.yaml
+    eval_config: configs/eval.yaml
+    processed_dir: data/processed
+    sft_rejected: data/interim/sft_rejected.jsonl
+    pref_rejected: data/interim/dpo_rejected.jsonl
+    pref_quality: data/interim/dpo_quality_report.json
+    dataset_info: data/processed/dataset_info.json
+    eval_output_dir: reports/experiments/latest_eval
+    badcase_input: reports/experiments/latest_eval/badcases.jsonl
+    badcase_output: reports/badcases/latest_badcases.md
+
+  sft_qlora:
+    split:
+      seed: 42
+      train: 0.8
+      dev: 0.1
+      test: 0.1
+    sft_input: data/raw/mock_sft_raw.jsonl
+    pref_input: data/raw/mock_dpo_raw.jsonl
+    sft_config: configs/sft_qlora.yaml
+    dpo_config: configs/dpo.yaml
+    eval_config: configs/eval.yaml
+    processed_dir: data/processed
+    sft_rejected: data/interim/sft_rejected.jsonl
+    pref_rejected: data/interim/dpo_rejected.jsonl
+    pref_quality: data/interim/dpo_quality_report.json
+    dataset_info: data/processed/dataset_info.json
+    eval_output_dir: reports/experiments/latest_eval
+    badcase_input: reports/experiments/latest_eval/badcases.jsonl
+    badcase_output: reports/badcases/latest_badcases.md
+
+  dpo:
+    split:
+      seed: 42
+      train: 0.8
+      dev: 0.1
+      test: 0.1
+    sft_input: data/raw/mock_sft_raw.jsonl
+    pref_input: data/raw/mock_dpo_raw.jsonl
+    sft_config: configs/sft.yaml
+    dpo_config: configs/dpo.yaml
+    eval_config: configs/eval.yaml
+    processed_dir: data/processed
+    sft_rejected: data/interim/sft_rejected.jsonl
+    pref_rejected: data/interim/dpo_rejected.jsonl
+    pref_quality: data/interim/dpo_quality_report.json
+    dataset_info: data/processed/dataset_info.json
+    eval_output_dir: reports/experiments/latest_eval
+    badcase_input: reports/experiments/latest_eval/badcases.jsonl
+    badcase_output: reports/badcases/latest_badcases.md
+
+  eval:
+    split:
+      seed: 42
+      train: 0.8
+      dev: 0.1
+      test: 0.1
+    sft_input: data/raw/mock_sft_raw.jsonl
+    pref_input: data/raw/mock_dpo_raw.jsonl
+    sft_config: configs/sft.yaml
+    dpo_config: configs/dpo.yaml
+    eval_config: configs/eval.yaml
+    processed_dir: data/processed
+    sft_rejected: data/interim/sft_rejected.jsonl
+    pref_rejected: data/interim/dpo_rejected.jsonl
+    pref_quality: data/interim/dpo_quality_report.json
+    dataset_info: data/processed/dataset_info.json
+    eval_output_dir: reports/experiments/latest_eval
+    badcase_input: reports/experiments/latest_eval/badcases.jsonl
+    badcase_output: reports/badcases/latest_badcases.md
+

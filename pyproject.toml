@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ealignment"
+name = "ecommerce-support-alignment"
 version = "0.1.0"
-description = "Framework-first LLM alignment project for Chinese e-commerce customer support."
+description = "Framework-first alignment repo for Chinese e-commerce support using LLaMA-Factory."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []

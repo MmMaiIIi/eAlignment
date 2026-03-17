@@ -1,423 +1,94 @@
 # AGENTS.md
 
-## Project Identity
+## Architectural Intent
 
-This repository implements Project 1: an interview-ready LLM alignment project for Chinese e-commerce customer support.
+This repository is a compact adaptation layer around existing open-source training tooling for Chinese e-commerce customer-support alignment.
 
-The repository is intentionally framework-first, not framework-reimplementation-first.
+- Training backend: **LLaMA-Factory**
+- Base model target: **Qwen/Qwen3-8B**
+- This repo owns data prep, evaluation, badcases, ablation/reporting.
+- This repo does **not** reimplement SFT/DPO trainers.
 
-We will use existing, mature open-source tooling as much as possible:
+Main execution path:
 
-- Qwen3-8B as the base model
-- LLaMA-Factory as the primary training framework
-- Transformers / TRL / PEFT as the underlying fine-tuning stack
-- DeepSpeed ZeRO-2 as the training infrastructure option
+`runs/ -> scripts/ -> align/`
 
-This repository should NOT build a custom SFT/DPO training framework from scratch.
-Instead, it should provide a clean adaptation layer around existing frameworks, focused on:
+## Directory Responsibilities
 
-- dataset preparation
-- domain-specific formatting
-- experiment configs
-- launch scripts
-- evaluation
-- badcase analysis
-- reports and documentation
+- `align/`
+  Project core logic only: data normalization/validation, eval scoring/comparison, config/io helpers.
+- `scripts/`
+  Thin entrypoints for reproducible actions (`prepare_data`, `prepare_pref`, `eval`, `badcases`, `plan_ablations`).
+- `runs/`
+  Copy-paste runnable workflows (`smoke.sh`, `sft.sh`, `dpo.sh`, `eval.sh`).
+- `configs/`
+  Small config surface:
+  - profile control (`profiles.yaml`)
+  - LLaMA-Factory configs (`sft*.yaml`, `dpo*.yaml`, `ds_zero2.json`)
+  - eval/ablation configs (`eval.yaml`, `ablations.yaml`)
+- `data/`
+  Raw, synthetic, processed, interim artifacts.
+- `reports/`
+  Templates, experiment outputs, badcase notes.
+- `dev/`
+  One-off temporary scripts only; not part of core runtime path.
+- `tests/`
+  Critical smoke checks for config/data/eval path.
 
----
+## Core vs Script vs Runs vs Dev
 
-## Core Goal
+- Put reusable logic in `align/`.
+- Put CLI argument handling + path wiring in `scripts/`.
+- Put short end-to-end command sequences in `runs/`.
+- Put temporary or throwaway work in `dev/` only.
 
-Build a complete and reproducible alignment project for Chinese e-commerce customer support that covers:
+## What Must Never Be Reintroduced
 
-- SFT
-- DPO
-- evaluation
-- ablation
-- badcase analysis
+1. Custom trainer layers duplicating LLaMA-Factory.
+2. Giant `utils` dumping ground.
+3. Unnecessary factories/registries/manager hierarchies.
+4. Duplicate config universes that mirror upstream.
+5. Dead wrappers with one caller and no value.
+6. Hidden control flow that obscures the runtime path.
 
-while minimizing unnecessary custom training code.
+## Feature Addition Rules
 
-The final project should look like something an applied LLM intern or junior LLM engineer would actually build:
-practical, reproducible, and easy to explain.
+1. Start from existing scripts and keep the execution path short.
+2. Add new files only when an existing file would become unreadable.
+3. Keep profile-based defaults; avoid adding knobs without clear value.
+4. For training behavior changes, edit LLaMA-Factory configs directly.
+5. For domain behavior changes, edit `align/data.py` or `align/eval.py`.
 
----
+## New File Rules
 
-## Main Principle
+- Each new top-level file/dir must have a clear operational reason.
+- Avoid creating parallel modules for a single feature.
+- Prefer editing an existing focused file over creating a tiny new one.
 
-Use existing frameworks directly.
-Do not reinvent wheels.
-
-Specifically:
-
-- Do not implement a custom trainer if LLaMA-Factory already supports the workflow.
-- Do not implement custom LoRA/QLoRA injection logic.
-- Do not implement custom DPO loss or trainer logic.
-- Do not implement custom DeepSpeed orchestration.
-- Do not create a giant internal framework.
-
-Custom code is allowed only when it adds project-specific value, such as:
-
-- data cleaning and transformation
-- schema validation
-- domain-specific evaluation
-- experiment summaries
-- reporting
-
----
-
-## Framework Strategy
-
-### Primary framework
-Use LLaMA-Factory as the main training entrypoint for:
-
-- SFT
-- DPO
-- LoRA / QLoRA
-- DeepSpeed integration
-- model export where needed
-
-### Supporting libraries
-Use these as standard dependencies and references:
-
-- transformers
-- trl
-- peft
-- accelerate
-- deepspeed
-- datasets
-- evaluate
-- pandas
-- pyyaml
-
-### Boundary
-This repository should be a project repo around LLaMA-Factory, not a replacement for LLaMA-Factory.
-
----
-
-## Target Domain
-
-Chinese e-commerce customer support, including at minimum:
-
-- returns_refunds
-- shipping_logistics
-- product_specs
-- order_modification
-- after_sales
-- complaint_soothing
-
-Typical tasks include:
-
-- handling refund/return requests
-- explaining delivery status and delays
-- answering product detail questions
-- modifying or cancelling orders
-- responding to emotionally frustrated customers
-- producing policy-compliant support replies
-
----
-
-## Repository Design
-
-Prefer a structure like this:
-
-```text
-.
-├── AGENTS.md
-├── README.md
-├── requirements.txt
-├── pyproject.toml
-├── configs/
-│   ├── llamafactory/
-│   │   ├── sft/
-│   │   ├── dpo/
-│   │   └── deepspeed/
-│   ├── data/
-│   └── eval/
-├── data/
-│   ├── raw/
-│   ├── interim/
-│   ├── processed/
-│   └── synthetic/
-├── scripts/
-│   ├── prepare_sft_data.py
-│   ├── prepare_dpo_data.py
-│   ├── launch_sft.sh
-│   ├── launch_dpo.sh
-│   ├── export_model.sh
-│   ├── run_eval.py
-│   └── summarize_badcases.py
-├── src/
-│   ├── data/
-│   ├── eval/
-│   ├── prompts/
-│   └── utils/
-├── reports/
-│   ├── templates/
-│   ├── experiments/
-│   └── badcases/
-└── tests/
-    ├── test_configs.py
-    ├── test_data_pipeline.py
-    ├── test_eval_pipeline.py
-    └── test_smoke_assets.py
-````
-
-Important:
-Do not create a large `src/train/` framework unless there is a very small helper that is truly necessary.
-Training should mostly be driven by LLaMA-Factory configs and wrapper scripts.
-
----
-
-## What This Repo Owns
-
-This repository should own:
-
-1. Data schemas
-2. Data conversion and validation scripts
-3. LLaMA-Factory-ready SFT and DPO datasets
-4. LLaMA-Factory config files
-5. Wrapper scripts for launching experiments
-6. Evaluation code
-7. Ablation definitions
-8. Badcase analysis workflow
-9. Reports and interview-facing documentation
-
----
+## Refactor Discipline
 
-## What This Repo Should Not Own
+- Delete dead code promptly.
+- Remove stale config keys and old paths when replacing workflows.
+- Keep naming consistent with the main path.
+- Do not preserve legacy indirection for sentiment.
 
-This repository should not own:
+## Testing Expectations
 
-* a custom trainer stack
-* a custom LoRA framework
-* a custom DPO implementation
-* a custom distributed training engine
-* copied source code from LLaMA-Factory, TRL, or PEFT
+Minimum checks before finalizing meaningful changes:
 
-If integration with an upstream framework is needed, prefer:
+1. Config loading + required field checks.
+2. Data preparation smoke checks.
+3. Evaluation pipeline smoke checks.
 
-* documented installation
-* wrapper scripts
-* config files
-* light adapters
+Use narrow test commands first; expand only when needed.
 
-Do not vendor large framework code into this repo.
+## README Discipline
 
----
+When architecture or execution paths change, update README in the same change set:
 
-## Assumption About LLaMA-Factory
+- quickstart commands
+- where to edit core logic
+- verified vs expected workflows
+- artifact paths
+- limitations
 
-Assume the user will install LLaMA-Factory separately or make `llamafactory-cli` available in the environment.
-
-This repo should:
-
-* document that dependency clearly
-* generate configs and data that are directly usable by LLaMA-Factory
-* provide launch scripts around it
-
-Do not try to copy LLaMA-Factory internals into this project.
-
----
-
-## Dataset Design
-
-### SFT dataset
-
-Store normalized instruction/chat examples for customer support.
-
-Preferred normalized JSONL example:
-
-```json
-{
-  "id": "sft_0001",
-  "category": "returns_refunds",
-  "system": "You are a professional e-commerce customer support assistant.",
-  "instruction": "The customer says the product arrived damaged and asks how to request a return.",
-  "input": "",
-  "output": "I am sorry this happened. Please provide your order number and a photo of the damaged item. We will help you arrange a return or replacement as soon as possible."
-}
-````
-
-### Preference dataset
-
-Store prompt, chosen, rejected.
-
-Preferred normalized JSONL example:
-
-```json
-{
-  "id": "pref_0001",
-  "category": "complaint_soothing",
-  "prompt": "Customer: Your delivery is late again. This is unacceptable.",
-  "chosen": "I am sorry for the delay and understand your frustration. Please send your order number and I will check the latest delivery status and available support options for you.",
-  "rejected": "Please wait patiently. Delays happen."
-}
-````
-
-All custom scripts should convert raw/internal formats into the formats required by LLaMA-Factory or closely aligned with it.
-
----
-
-## Evaluation Philosophy
-
-This is an applied project.
-Evaluation should emphasize business-facing quality, not only train loss.
-
-At minimum, support some combination of:
-
-* category-level evaluation
-* response quality checks
-* actionability checks
-* politeness/tone checks
-* policy compliance checks
-* badcase collection
-
-If proxy metrics are used, clearly label them as proxy metrics.
-
-Do not invent benchmark gains.
-
----
-
-## Stage Plan
-
-### Stage 0
-
-Scaffold the repo around LLaMA-Factory usage.
-Set up dependencies, configs, synthetic data, smoke assets, and documentation.
-
-### Stage 1
-
-Implement data schemas, validation, normalization, and dataset conversion scripts.
-
-### Stage 2
-
-Add SFT experiment configs and wrapper launch scripts using LLaMA-Factory.
-
-### Stage 3
-
-Add evaluation pipeline, model comparison workflow, and badcase collection.
-
-### Stage 4
-
-Add preference-data construction, validation, and DPO configs using LLaMA-Factory.
-
-### Stage 5
-
-Add ablation workflow, final reports, and interview-ready project packaging.
-
-Do not skip directly to full implementation.
-Build the project stage by stage.
-
----
-
-## Coding Standards
-
-* Prefer small, explicit Python utilities.
-* Use YAML for configs.
-* Keep scripts easy to run from the command line.
-* Avoid heavy abstractions.
-* Avoid hidden state.
-* Keep functions short and typed where practical.
-* Document assumptions.
-
-This repository should remain compact and legible.
-
----
-
-## Testing Requirements
-
-Each stage should leave behind useful tests.
-
-Minimum expectations:
-
-* config loading test
-* synthetic data readability test
-* schema validation test
-* conversion pipeline smoke test
-* eval pipeline smoke test
-
-If a full train run is too expensive, rely on:
-
-* synthetic examples
-* config validation
-* no-crash command generation
-* output schema validation
-
-Tests must not depend on private or unavailable data.
-
----
-
-## Documentation Requirements
-
-README should clearly explain:
-
-* project goal
-* why LLaMA-Factory is used
-* repository structure
-* setup
-* data preparation
-* SFT workflow
-* DPO workflow
-* evaluation workflow
-* experiment outputs
-* limitations
-* interview talking points
-
-Longer experiment summaries should go into `reports/`.
-
----
-
-## Guardrails for Codex
-
-Before editing:
-
-1. Read AGENTS.md.
-2. Inspect the current repository tree.
-3. Preserve working files unless change is necessary.
-
-When implementing:
-
-1. Prefer framework integration over custom reimplementation.
-2. Add only project-specific glue code.
-3. Keep changes incremental.
-4. Run the narrowest useful checks after each change.
-5. Update documentation when behavior changes.
-6. Never fabricate experiment results.
-7. Clearly mark verified vs unverified steps.
-
-Always end with:
-
-* summary of changes
-* files changed
-* commands run
-* current status
-* remaining TODOs or risks
-
----
-
-## Definition of Done
-
-A stage is done only if:
-
-* repo structure is coherent
-* configs exist
-* docs are updated
-* smoke checks pass
-* generated assets are valid
-* there is no fake completeness
-
----
-
-## Final Outcome
-
-The final repository should demonstrate:
-
-* clean domain data preparation
-* practical use of LLaMA-Factory for SFT and DPO
-* meaningful evaluation and comparison
-* disciplined ablation thinking
-* clear badcase analysis
-* a polished, interview-ready engineering story
-
-````
