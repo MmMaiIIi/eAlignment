@@ -18,6 +18,8 @@ CATEGORIES = [
     "complaint_soothing",
 ]
 
+SOURCE_FORMATS = ("internal", "jddc", "ecd", "faq")
+
 CATEGORY_ALIASES = {
     "returns_refunds": "returns_refunds",
     "returns": "returns_refunds",
@@ -107,6 +109,10 @@ def _split(records: list[dict[str, Any]], train: float, dev: float, test: float,
     n = len(rows)
     n_train = int(n * train)
     n_dev = int(n * dev)
+    if n > 0 and n_train == 0:
+        n_train = 1
+    if n_train + n_dev > n:
+        n_dev = max(0, n - n_train)
     n_test = n - n_train - n_dev
     if n >= 3 and n_dev == 0:
         n_dev = 1
@@ -129,6 +135,143 @@ def _rejected(raw: Mapping[str, Any], line_no: int, errors: list[str], source_na
         "source": source_name,
         "errors": errors,
         "raw": dict(raw),
+    }
+
+
+def _infer_category_from_text(value: str) -> str:
+    text = value.lower()
+    rules = [
+        (["refund", "return", "rma"], "returns_refunds"),
+        (["shipping", "delivery", "logistics", "tracking"], "shipping_logistics"),
+        (["spec", "size", "material", "compatib"], "product_specs"),
+        (["change", "modify", "cancel", "address"], "order_modification"),
+        (["warranty", "repair", "after-sales", "aftersales"], "after_sales"),
+        (["complaint", "angry", "frustrated", "escalat"], "complaint_soothing"),
+    ]
+    for keywords, category in rules:
+        if any(keyword in text for keyword in keywords):
+            return category
+    return ""
+
+
+def _turn_role(turn: Any) -> str:
+    if isinstance(turn, Mapping):
+        role = _text(_pick(turn, ["role", "speaker", "from", "type"])).lower()
+        if role in {"customer", "user", "buyer", "q", "human"}:
+            return "user"
+        if role in {"assistant", "agent", "seller", "a", "bot"}:
+            return "assistant"
+        return ""
+    if isinstance(turn, list) and turn:
+        role = _text(turn[0]).lower()
+        if role in {"customer", "user", "buyer", "q", "human"}:
+            return "user"
+        if role in {"assistant", "agent", "seller", "a", "bot"}:
+            return "assistant"
+    if isinstance(turn, str):
+        text = turn.strip().lower()
+        if text.startswith(("q:", "user:", "buyer:", "customer:")):
+            return "user"
+        if text.startswith(("a:", "assistant:", "seller:", "agent:")):
+            return "assistant"
+    return ""
+
+
+def _turn_text(turn: Any) -> str:
+    if isinstance(turn, Mapping):
+        return _text(_pick(turn, ["text", "content", "utterance", "sentence", "msg", "message"]))
+    if isinstance(turn, list) and len(turn) >= 2:
+        return _text(turn[1])
+    return _text(turn)
+
+
+def _dialog_triplet(value: Any) -> tuple[str, str, str]:
+    if not isinstance(value, list):
+        return "", "", ""
+    turns: list[tuple[str, str]] = []
+    for turn in value:
+        role = _turn_role(turn)
+        text = _turn_text(turn)
+        if role and text:
+            turns.append((role, text))
+    if not turns:
+        return "", "", ""
+
+    pair_index = -1
+    for idx in range(len(turns) - 1):
+        if turns[idx][0] == "user" and turns[idx + 1][0] == "assistant":
+            pair_index = idx
+    if pair_index == -1:
+        return "", "", ""
+
+    instruction = turns[pair_index][1]
+    output = turns[pair_index + 1][1]
+    context_parts = [f"{role}: {text}" for role, text in turns[:pair_index]]
+    return instruction, "\n".join(context_parts), output
+
+
+def _normalize_external_sft(
+    raw: Mapping[str, Any], source_name: str, source_format: str, line_no: int
+) -> dict[str, Any]:
+    if source_format not in SOURCE_FORMATS:
+        raise ValueError(f"Unsupported source_format `{source_format}`. Expected one of {SOURCE_FORMATS}.")
+    if source_format == "internal":
+        return dict(raw)
+
+    if source_format == "jddc":
+        query, context, response = _dialog_triplet(
+            _pick(raw, ["dialog", "dialogue", "conversation", "messages", "session"])
+        )
+        if not query:
+            query = _text(_pick(raw, ["query", "question", "customer_query", "instruction"]))
+        if not response:
+            response = _text(_pick(raw, ["response", "answer", "assistant_response", "reply"]))
+        input_text = _text(_pick(raw, ["context", "history", "input"])) or context
+        record_id = _text(_pick(raw, ["id", "session_id", "sessionid", "dialog_id", "dialogue_id"]))
+    elif source_format == "ecd":
+        query = _text(
+            _pick(raw, ["buyer_query", "customer_query", "user_query", "question", "instruction", "query"])
+        )
+        response = _text(_pick(raw, ["seller_response", "agent_response", "assistant_response", "answer", "response"]))
+        input_text = _text(_pick(raw, ["context", "history", "input"]))
+        if not query or not response:
+            dialog_query, dialog_context, dialog_response = _dialog_triplet(
+                _pick(raw, ["dialog", "dialogue", "conversation", "messages"])
+            )
+            query = query or dialog_query
+            response = response or dialog_response
+            input_text = input_text or dialog_context
+        record_id = _text(_pick(raw, ["id", "sample_id", "record_id", "uid", "session_id"]))
+    else:  # faq
+        query = _text(_pick(raw, ["question", "faq_question", "query", "instruction", "title"]))
+        response = _text(_pick(raw, ["answer", "faq_answer", "response", "output", "content"]))
+        input_text = _text(_pick(raw, ["context", "detail", "input"]))
+        record_id = _text(_pick(raw, ["id", "faq_id", "question_id", "uid", "record_id"]))
+
+    if not query:
+        raise ValueError(f"{source_format}: missing query text")
+    if not response:
+        raise ValueError(f"{source_format}: missing response text")
+
+    category_value = _text(_pick(raw, ["category", "intent", "topic", "domain", "scene", "label"]))
+    category = _category(category_value)
+    if not category:
+        category = _infer_category_from_text(f"{query}\n{input_text}\n{response}")
+    if not category and source_format == "faq":
+        category = "product_specs"
+    if not category:
+        raise ValueError(f"{source_format}: missing/unsupported category and inference failed")
+
+    source_id = _text(_pick(raw, ["source_id", "original_id", "ticket_id", "dialog_id", "session_id"])) or record_id
+    return {
+        "id": record_id or f"{source_format}_{line_no:08d}",
+        "category": category,
+        "system": _text(_pick(raw, ["system", "system_prompt", "sys_prompt"], SYSTEM_PROMPT)) or SYSTEM_PROMPT,
+        "query": query,
+        "input": input_text,
+        "response": response,
+        "source": _text(_pick(raw, ["source", "source_name"], source_name)) or source_name,
+        "source_id": source_id,
     }
 
 
@@ -223,7 +366,12 @@ def _write_dataset_info(path: Path) -> None:
     data = {
         "ecom_sft_seed": {
             "file_name": "sft_train.jsonl",
-            "columns": {"instruction": "instruction", "input": "input", "output": "output"},
+            "columns": {
+                "prompt": "instruction",
+                "query": "input",
+                "response": "output",
+                "system": "system",
+            },
         },
         "ecom_pref_seed": {
             "file_name": "dpo_train.jsonl",
@@ -238,15 +386,24 @@ def prepare_sft_dataset(
     input_path: Path,
     output_dir: Path,
     rejected_path: Path,
+    dataset_info_path: Path | None,
     split_cfg: Mapping[str, Any],
     source_name: str,
+    source_format: str = "internal",
     fail_on_invalid: bool = False,
 ) -> dict[str, Any]:
     raw_rows = read_jsonl(input_path)
     valid_rows: list[dict[str, Any]] = []
     rejected_rows: list[dict[str, Any]] = []
     for line_no, raw in enumerate(raw_rows, start=1):
-        parsed, errors = _parse_sft(raw, source_name=source_name)
+        try:
+            normalized_raw = _normalize_external_sft(
+                raw, source_name=source_name, source_format=source_format, line_no=line_no
+            )
+        except ValueError as exc:
+            rejected_rows.append(_rejected(raw, line_no, [f"normalize: {exc}"], source_name, "sft"))
+            continue
+        parsed, errors = _parse_sft(normalized_raw, source_name=source_name)
         if errors:
             rejected_rows.append(_rejected(raw, line_no, errors, source_name, "sft"))
         else:
@@ -267,10 +424,13 @@ def prepare_sft_dataset(
     write_jsonl(output_dir / "sft_dev.jsonl", splits["dev"])
     write_jsonl(output_dir / "sft_test.jsonl", splits["test"])
     write_jsonl(rejected_path, rejected_rows)
+    if dataset_info_path is not None:
+        _write_dataset_info(dataset_info_path)
 
     return {
         "dataset": "sft",
         "input": str(input_path),
+        "source_format": source_format,
         "total_raw": len(raw_rows),
         "valid": len(valid_rows),
         "rejected": len(rejected_rows),
@@ -331,4 +491,3 @@ def prepare_preference_dataset(
         "test": len(splits["test"]),
         "quality_report": str(quality_path),
     }
-

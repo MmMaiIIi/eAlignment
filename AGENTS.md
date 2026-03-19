@@ -59,6 +59,16 @@ Main execution path:
 4. For training behavior changes, edit LLaMA-Factory configs directly.
 5. For domain behavior changes, edit `align/data.py` or `align/eval.py`.
 
+## Data Pipeline Contract
+
+- Keep the SFT pipeline explicit:
+  `raw -> source normalization -> unified raw schema -> validation/split -> processed jsonl + dataset_info`.
+- Supported SFT source formats are `internal`, `jddc`, `ecd`, `faq`.
+- Unified raw SFT schema should stay compact:
+  `id`, `category`, `query`, `response`, `source`, `source_id` (optional `system`/`metadata`).
+- `data/processed/dataset_info.json` must stay aligned with LLaMA-Factory Alpaca-style mapping.
+- This repo owns data/eval/reporting; LLaMA-Factory owns training internals.
+
 ## New File Rules
 
 - Each new top-level file/dir must have a clear operational reason.
@@ -91,4 +101,3 @@ When architecture or execution paths change, update README in the same change se
 - verified vs expected workflows
 - artifact paths
 - limitations
-

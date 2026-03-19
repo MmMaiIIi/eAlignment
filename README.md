@@ -68,7 +68,7 @@ The repository follows a shallow path: `runs -> scripts -> align`.
 
 ```bash
 pip install -r requirements.txt
-python scripts/prepare_data.py --profile smoke
+python scripts/prepare_data.py --profile smoke --source-format internal
 ```
 
 Shortest working command:
@@ -95,10 +95,39 @@ Expected (environment-dependent):
 
 ## Data Preparation
 
+Pipeline:
+
+`raw source rows -> source normalizer -> unified raw SFT schema -> validation/split -> processed jsonl + dataset_info -> LLaMA-Factory`
+
+Supported SFT source formats:
+
+- `internal`
+- `jddc`
+- `ecd`
+- `faq`
+
+Unified raw SFT schema (normalizer output):
+
+```json
+{
+  "id": "...",
+  "category": "...",
+  "query": "...",
+  "response": "...",
+  "source": "...",
+  "source_id": "...",
+  "system": "optional",
+  "metadata": "optional"
+}
+```
+
 SFT:
 
 ```bash
-python scripts/prepare_data.py --profile smoke
+python scripts/prepare_data.py --profile sft --input data/raw/merged_sft.jsonl --source-format internal --source-name merged
+python scripts/prepare_data.py --profile sft --input data/raw/jddc_sft.jsonl --source-format jddc --source-name jddc
+python scripts/prepare_data.py --profile sft --input data/raw/ecd_sft.jsonl --source-format ecd --source-name ecd
+python scripts/prepare_data.py --profile sft --input data/raw/faq_sft.jsonl --source-format faq --source-name faq
 ```
 
 Preference:
@@ -116,7 +145,17 @@ Outputs:
 - `data/interim/dpo_rejected.jsonl`
 - `data/interim/dpo_quality_report.json`
 
+Where to add a new SFT source:
+
+- edit `align/data.py` in `_normalize_external_sft`
+- keep it as `external -> unified raw schema -> existing validator`
+
 ## SFT
+
+LLaMA-Factory takeover point:
+
+- `scripts/launch_sft.sh` runs `llamafactory-cli train <configs/sft*.yaml>`
+- `dataset: ecom_sft_seed` + `dataset_dir: data/processed` are resolved by `data/processed/dataset_info.json`
 
 Dry run:
 
@@ -213,4 +252,3 @@ Temporary one-off work belongs in `dev/` only.
 - How preference data quality checks reduce DPO noise
 - How side-by-side eval + badcases drive practical iteration
 - How profile compression keeps experimentation fast and reproducible
-
