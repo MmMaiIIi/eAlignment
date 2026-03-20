@@ -13,8 +13,11 @@ learning_rate: 1.0e-4
 num_train_epochs: 1.0
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 1
+seed: 42
 
 logging_steps: 1
 save_steps: 20
+report_to: tensorboard
+logging_dir: outputs/sft/smoke/tensorboard
 plot_loss: true
 output_dir: outputs/sft/smoke

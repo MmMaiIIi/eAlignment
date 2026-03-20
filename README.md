@@ -175,6 +175,19 @@ QLoRA variant:
 bash scripts/launch_sft.sh sft_qlora
 ```
 
+Per-run SFT logging bundle (after a successful run):
+
+- `runs/artifacts/sft/<run_name>/launch_command.txt`
+- `runs/artifacts/sft/<run_name>/config_snapshot.yaml`
+- `runs/artifacts/sft/<run_name>/run_manifest.json`
+- `runs/artifacts/sft/<run_name>/training_log.jsonl`
+- `runs/artifacts/sft/<run_name>/before_after.jsonl` (or `.md` on failure)
+- `reports/loss_curve_<run_name>.png`
+
+Fixed prompt set for qualitative before/after:
+
+- `data/synthetic/sft_eval_prompts.jsonl`
+
 ## DPO
 
 Dry run:
@@ -209,6 +222,8 @@ Outputs:
 - Training output roots:
   - `outputs/sft/...`
   - `outputs/dpo/...`
+- SFT run bundles:
+  - `runs/artifacts/sft/<run_name>/`
 - Eval artifacts: `reports/experiments/latest_eval/`
 - Badcase notes/templates: `reports/badcases/`, `reports/templates/`
 - Ablation plan artifacts:

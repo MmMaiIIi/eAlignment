@@ -1,0 +1,20 @@
+{
+  "ecom_sft_seed": {
+    "file_name": "sft_train.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "system": "system"
+    }
+  },
+  "ecom_pref_seed": {
+    "file_name": "dpo_train.jsonl",
+    "ranking": true,
+    "columns": {
+      "prompt": "prompt",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    }
+  }
+}
