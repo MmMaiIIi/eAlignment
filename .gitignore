@@ -49,11 +49,7 @@ data/interim/*.parquet
 data/processed/*.parquet
 
 # Data (local-only)
-data/raw/
-data/interim/
-data/processed/
-data/synthetic/
-data/JDDC-Baseline-Seq2Seq-master/
+data/
 
 # Models / checkpoints
 checkpoints/
