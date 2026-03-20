@@ -49,7 +49,7 @@ data/interim/*.parquet
 data/processed/*.parquet
 
 # Data (local-only)
-# data/raw/
+data/raw/
 data/interim/
 data/processed/
 data/synthetic/
