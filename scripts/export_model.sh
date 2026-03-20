@@ -9,11 +9,17 @@ case "${PROFILE_OR_CONFIG}" in
   smoke)
     CONFIG_PATH="configs/sft_smoke.yaml"
     ;;
+  sft_lora_nodeepspeed_smoke)
+    CONFIG_PATH="configs/sft_lora_nodeepspeed_smoke.yaml"
+    ;;
   sft_plain_smoke)
     CONFIG_PATH="configs/sft_plain_smoke.yaml"
     ;;
   sft)
     CONFIG_PATH="configs/sft.yaml"
+    ;;
+  sft_lora_nodeepspeed)
+    CONFIG_PATH="configs/sft_lora_nodeepspeed.yaml"
     ;;
   sft_plain)
     CONFIG_PATH="configs/sft_plain.yaml"

@@ -9,6 +9,9 @@ def test_profile_loading_and_defaults() -> None:
     assert profile_name == "smoke"
     for key in ["split", "sft_config", "dpo_config", "eval_config"]:
         assert key in profile
+    lora_nodeepspeed_profile_name, lora_nodeepspeed_profile = load_profile("sft_lora_nodeepspeed")
+    assert lora_nodeepspeed_profile_name == "sft_lora_nodeepspeed"
+    assert lora_nodeepspeed_profile["sft_config"] == "configs/sft_lora_nodeepspeed.yaml"
     plain_profile_name, plain_profile = load_profile("sft_plain")
     assert plain_profile_name == "sft_plain"
     assert plain_profile["sft_config"] == "configs/sft_plain.yaml"
@@ -16,10 +19,14 @@ def test_profile_loading_and_defaults() -> None:
 
 def test_config_files_load_and_have_required_fields() -> None:
     sft_cfg = load_yaml("configs/sft.yaml")
+    sft_lora_nodeepspeed_cfg = load_yaml("configs/sft_lora_nodeepspeed.yaml")
+    sft_lora_nodeepspeed_smoke_cfg = load_yaml("configs/sft_lora_nodeepspeed_smoke.yaml")
     sft_plain_cfg = load_yaml("configs/sft_plain.yaml")
     sft_plain_smoke_cfg = load_yaml("configs/sft_plain_smoke.yaml")
     dpo_cfg = load_yaml("configs/dpo.yaml")
     assert not missing_required_fields(sft_cfg, stage="sft")
+    assert not missing_required_fields(sft_lora_nodeepspeed_cfg, stage="sft")
+    assert not missing_required_fields(sft_lora_nodeepspeed_smoke_cfg, stage="sft")
     assert not missing_required_fields(sft_plain_cfg, stage="sft")
     assert not missing_required_fields(sft_plain_smoke_cfg, stage="sft")
     assert not missing_required_fields(dpo_cfg, stage="dpo")

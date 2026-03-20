@@ -188,6 +188,13 @@ bash scripts/launch_sft.sh sft_plain_smoke
 bash scripts/launch_sft.sh sft_plain
 ```
 
+LoRA fallback variants (LoRA enabled, DeepSpeed disabled):
+
+```bash
+bash scripts/launch_sft.sh sft_lora_nodeepspeed_smoke
+bash scripts/launch_sft.sh sft_lora_nodeepspeed
+```
+
 Per-run SFT logging bundle (after a successful run):
 
 - `runs/artifacts/sft/<run_name>/launch_command.txt`
