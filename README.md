@@ -181,6 +181,13 @@ QLoRA variant:
 bash scripts/launch_sft.sh sft_qlora
 ```
 
+Plain fallback variants (no LoRA, no DeepSpeed):
+
+```bash
+bash scripts/launch_sft.sh sft_plain_smoke
+bash scripts/launch_sft.sh sft_plain
+```
+
 Per-run SFT logging bundle (after a successful run):
 
 - `runs/artifacts/sft/<run_name>/launch_command.txt`

@@ -9,12 +9,19 @@ def test_profile_loading_and_defaults() -> None:
     assert profile_name == "smoke"
     for key in ["split", "sft_config", "dpo_config", "eval_config"]:
         assert key in profile
+    plain_profile_name, plain_profile = load_profile("sft_plain")
+    assert plain_profile_name == "sft_plain"
+    assert plain_profile["sft_config"] == "configs/sft_plain.yaml"
 
 
 def test_config_files_load_and_have_required_fields() -> None:
     sft_cfg = load_yaml("configs/sft.yaml")
+    sft_plain_cfg = load_yaml("configs/sft_plain.yaml")
+    sft_plain_smoke_cfg = load_yaml("configs/sft_plain_smoke.yaml")
     dpo_cfg = load_yaml("configs/dpo.yaml")
     assert not missing_required_fields(sft_cfg, stage="sft")
+    assert not missing_required_fields(sft_plain_cfg, stage="sft")
+    assert not missing_required_fields(sft_plain_smoke_cfg, stage="sft")
     assert not missing_required_fields(dpo_cfg, stage="dpo")
     assert load_yaml("configs/eval.yaml")
     assert load_yaml("configs/profiles.yaml")
@@ -35,4 +42,3 @@ def test_core_artifacts_exist() -> None:
         "reports/badcases/WORKFLOW.md",
     ]:
         assert resolve(path).exists()
-
