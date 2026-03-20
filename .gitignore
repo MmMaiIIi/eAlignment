@@ -45,7 +45,7 @@ runs/artifacts/
 
 # Data (local-only)
 data/
-report/
+reports/
 
 
 # Models / checkpoints
