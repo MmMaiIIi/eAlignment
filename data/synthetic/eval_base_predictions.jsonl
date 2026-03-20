@@ -1,5 +1,0 @@
-{"id":"eval_0001","category":"shipping_logistics","prompt":"Customer: My parcel has not moved for 4 days.","response":"It is delayed. Wait."}
-{"id":"eval_0002","category":"complaint_soothing","prompt":"Customer: You never solve anything.","response":"Calm down. We cannot do much."}
-{"id":"eval_0003","category":"returns_refunds","prompt":"Customer: The item is broken.","response":"Maybe contact warehouse."}
-{"id":"eval_0004","category":"order_modification","prompt":"Customer: Can I change my address after payment?","response":"I do not know."}
-{"id":"eval_0005","category":"product_specs","prompt":"Customer: Is this phone dual SIM?","response":"Please read the product page."}

@@ -37,8 +37,43 @@ Thumbs.db
 outputs/
 logs/
 tmp/
+runs/artifacts/
+*.log
+*.log.*
+*.out
+*.err
 
 # Large data artifacts (keep small mock assets tracked)
 data/raw/*.parquet
 data/interim/*.parquet
 data/processed/*.parquet
+
+# Data (local-only)
+data/raw/
+data/interim/
+data/processed/
+data/synthetic/
+data/JDDC-Baseline-Seq2Seq-master/
+
+# Models / checkpoints
+checkpoints/
+models/
+model/
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+*.gguf
+*.adapter
+
+# Images / plots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.webp
+*.tiff
+*.svg
