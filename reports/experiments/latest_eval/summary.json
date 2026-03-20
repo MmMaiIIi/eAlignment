@@ -21,51 +21,51 @@
   },
   "counts": {
     "samples": 5,
-    "badcases": 1
+    "badcases": 5
   },
   "aggregate": {
-    "tuned_proxy_score_avg": 0.9,
-    "base_proxy_score_avg": 0.35,
-    "delta_proxy_score_avg": 0.55,
+    "tuned_proxy_score_avg": 0.25,
+    "base_proxy_score_avg": 0.25,
+    "delta_proxy_score_avg": 0.0,
     "comparison_wins": {
-      "tuned_better": 4,
+      "tuned_better": 0,
       "base_better": 0,
-      "tie": 1
+      "tie": 5
     }
   },
   "category_breakdown": {
     "shipping_logistics": {
       "samples": 1,
-      "tuned_proxy_score_avg": 1.0,
+      "tuned_proxy_score_avg": 0.25,
       "base_proxy_score_avg": 0.25,
-      "delta_proxy_score_avg": 0.75,
-      "badcases": 0
+      "delta_proxy_score_avg": 0.0,
+      "badcases": 1
     },
     "complaint_soothing": {
       "samples": 1,
-      "tuned_proxy_score_avg": 1.0,
-      "base_proxy_score_avg": 0.5,
-      "delta_proxy_score_avg": 0.5,
-      "badcases": 0
+      "tuned_proxy_score_avg": 0.25,
+      "base_proxy_score_avg": 0.25,
+      "delta_proxy_score_avg": 0.0,
+      "badcases": 1
     },
     "returns_refunds": {
       "samples": 1,
-      "tuned_proxy_score_avg": 1.0,
+      "tuned_proxy_score_avg": 0.25,
       "base_proxy_score_avg": 0.25,
-      "delta_proxy_score_avg": 0.75,
-      "badcases": 0
+      "delta_proxy_score_avg": 0.0,
+      "badcases": 1
     },
     "order_modification": {
       "samples": 1,
-      "tuned_proxy_score_avg": 1.0,
+      "tuned_proxy_score_avg": 0.25,
       "base_proxy_score_avg": 0.25,
-      "delta_proxy_score_avg": 0.75,
-      "badcases": 0
+      "delta_proxy_score_avg": 0.0,
+      "badcases": 1
     },
     "product_specs": {
       "samples": 1,
-      "tuned_proxy_score_avg": 0.5,
-      "base_proxy_score_avg": 0.5,
+      "tuned_proxy_score_avg": 0.25,
+      "base_proxy_score_avg": 0.25,
       "delta_proxy_score_avg": 0.0,
       "badcases": 1
     }

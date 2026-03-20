@@ -11,15 +11,18 @@ from align.io import read_jsonl, write_json, write_jsonl
 from align.prompts import SYSTEM_PROMPT
 
 
-CATEGORIES = [
-    "returns_refunds",
-    "shipping_logistics",
-    "product_specs",
-    "order_modification",
-    "after_sales",
-    "complaint_soothing",
-    "general",
-]
+CATEGORY_LABELS = {
+    "returns_refunds": "退货退款",
+    "shipping_logistics": "物流配送",
+    "product_consultation": "商品咨询",
+    "order_modification": "订单修改",
+    "warranty_repair": "售后维修",
+    "complaint_resolution": "投诉处理",
+    "general": "通用客服",
+}
+FALLBACK_CATEGORY = CATEGORY_LABELS["general"]
+FAQ_DEFAULT_CATEGORY = CATEGORY_LABELS["product_consultation"]
+CATEGORIES = list(CATEGORY_LABELS.values())
 
 SOURCE_FORMATS = ("internal", "jddc", "ecd", "faq")
 
@@ -43,56 +46,240 @@ PLACEHOLDER_TOKENS = {
 JDDC_DIALOG_KEYS = ["dialog", "dialogue", "conversation", "messages", "session", "turns", "utterances", "chat"]
 
 CATEGORY_ALIASES = {
-    "returns_refunds": "returns_refunds",
-    "returns": "returns_refunds",
-    "refund": "returns_refunds",
-    "refunds": "returns_refunds",
-    "return": "returns_refunds",
-    "return_refund": "returns_refunds",
-    "shipping_logistics": "shipping_logistics",
-    "shipping": "shipping_logistics",
-    "logistics": "shipping_logistics",
-    "delivery": "shipping_logistics",
-    "product_specs": "product_specs",
-    "product_spec": "product_specs",
-    "specs": "product_specs",
-    "product": "product_specs",
-    "product_consultation": "product_specs",
-    "consultation": "product_specs",
-    "order_modification": "order_modification",
-    "order_change": "order_modification",
-    "change_order": "order_modification",
-    "modify_order": "order_modification",
-    "after_sales": "after_sales",
-    "aftersales": "after_sales",
-    "post_sale": "after_sales",
-    "warranty": "after_sales",
-    "warranty_repair": "after_sales",
-    "complaint_soothing": "complaint_soothing",
-    "complaint": "complaint_soothing",
-    "deescalation": "complaint_soothing",
-    "complaint_resolution": "complaint_soothing",
-    "general": "general",
-    "other": "general",
-    "others": "general",
-    "misc": "general",
-    "miscellaneous": "general",
-    "退款": "returns_refunds",
-    "退货": "returns_refunds",
-    "退換": "returns_refunds",
-    "物流": "shipping_logistics",
-    "配送": "shipping_logistics",
-    "发货": "shipping_logistics",
-    "規格": "product_specs",
-    "规格": "product_specs",
-    "咨询": "product_specs",
-    "改地址": "order_modification",
-    "修改订单": "order_modification",
-    "售后": "after_sales",
-    "维修": "after_sales",
-    "投诉": "complaint_soothing",
-    "其他": "general",
+    "returns_refunds": CATEGORY_LABELS["returns_refunds"],
+    "returns": CATEGORY_LABELS["returns_refunds"],
+    "refund": CATEGORY_LABELS["returns_refunds"],
+    "refunds": CATEGORY_LABELS["returns_refunds"],
+    "return": CATEGORY_LABELS["returns_refunds"],
+    "return_refund": CATEGORY_LABELS["returns_refunds"],
+    "shipping_logistics": CATEGORY_LABELS["shipping_logistics"],
+    "shipping": CATEGORY_LABELS["shipping_logistics"],
+    "logistics": CATEGORY_LABELS["shipping_logistics"],
+    "delivery": CATEGORY_LABELS["shipping_logistics"],
+    "product_specs": CATEGORY_LABELS["product_consultation"],
+    "product_spec": CATEGORY_LABELS["product_consultation"],
+    "specs": CATEGORY_LABELS["product_consultation"],
+    "product": CATEGORY_LABELS["product_consultation"],
+    "product_consultation": CATEGORY_LABELS["product_consultation"],
+    "consultation": CATEGORY_LABELS["product_consultation"],
+    "order_modification": CATEGORY_LABELS["order_modification"],
+    "order_change": CATEGORY_LABELS["order_modification"],
+    "change_order": CATEGORY_LABELS["order_modification"],
+    "modify_order": CATEGORY_LABELS["order_modification"],
+    "after_sales": CATEGORY_LABELS["warranty_repair"],
+    "aftersales": CATEGORY_LABELS["warranty_repair"],
+    "post_sale": CATEGORY_LABELS["warranty_repair"],
+    "warranty": CATEGORY_LABELS["warranty_repair"],
+    "warranty_repair": CATEGORY_LABELS["warranty_repair"],
+    "complaint_soothing": CATEGORY_LABELS["complaint_resolution"],
+    "complaint": CATEGORY_LABELS["complaint_resolution"],
+    "deescalation": CATEGORY_LABELS["complaint_resolution"],
+    "complaint_resolution": CATEGORY_LABELS["complaint_resolution"],
+    "general": CATEGORY_LABELS["general"],
+    "other": CATEGORY_LABELS["general"],
+    "others": CATEGORY_LABELS["general"],
+    "misc": CATEGORY_LABELS["general"],
+    "miscellaneous": CATEGORY_LABELS["general"],
+    "退货退款": CATEGORY_LABELS["returns_refunds"],
+    "退款": CATEGORY_LABELS["returns_refunds"],
+    "退货": CATEGORY_LABELS["returns_refunds"],
+    "退換": CATEGORY_LABELS["returns_refunds"],
+    "退换": CATEGORY_LABELS["returns_refunds"],
+    "物流配送": CATEGORY_LABELS["shipping_logistics"],
+    "物流": CATEGORY_LABELS["shipping_logistics"],
+    "配送": CATEGORY_LABELS["shipping_logistics"],
+    "发货": CATEGORY_LABELS["shipping_logistics"],
+    "快递": CATEGORY_LABELS["shipping_logistics"],
+    "商品咨询": CATEGORY_LABELS["product_consultation"],
+    "商品问题": CATEGORY_LABELS["product_consultation"],
+    "規格": CATEGORY_LABELS["product_consultation"],
+    "规格": CATEGORY_LABELS["product_consultation"],
+    "咨询": CATEGORY_LABELS["product_consultation"],
+    "尺寸": CATEGORY_LABELS["product_consultation"],
+    "材质": CATEGORY_LABELS["product_consultation"],
+    "颜色": CATEGORY_LABELS["product_consultation"],
+    "顏色": CATEGORY_LABELS["product_consultation"],
+    "库存": CATEGORY_LABELS["product_consultation"],
+    "订单修改": CATEGORY_LABELS["order_modification"],
+    "改地址": CATEGORY_LABELS["order_modification"],
+    "修改订单": CATEGORY_LABELS["order_modification"],
+    "取消订单": CATEGORY_LABELS["order_modification"],
+    "售后维修": CATEGORY_LABELS["warranty_repair"],
+    "售后": CATEGORY_LABELS["warranty_repair"],
+    "维修": CATEGORY_LABELS["warranty_repair"],
+    "保修": CATEGORY_LABELS["warranty_repair"],
+    "投诉处理": CATEGORY_LABELS["complaint_resolution"],
+    "投诉": CATEGORY_LABELS["complaint_resolution"],
+    "差评": CATEGORY_LABELS["complaint_resolution"],
+    "不满意": CATEGORY_LABELS["complaint_resolution"],
+    "通用客服": CATEGORY_LABELS["general"],
+    "其他": CATEGORY_LABELS["general"],
 }
+
+CATEGORY_INFERENCE_RULES: list[tuple[list[str], str]] = [
+    (
+        ["refund", "return", "rma", "退款", "退货", "退换", "換貨", "补偿", "价保", "仅退款", "退款申请"],
+        CATEGORY_LABELS["returns_refunds"],
+    ),
+    (
+        [
+            "shipping",
+            "delivery",
+            "logistics",
+            "tracking",
+            "物流",
+            "发货",
+            "快递",
+            "配送",
+            "运单",
+            "签收",
+            "催单",
+            "派送",
+        ],
+        CATEGORY_LABELS["shipping_logistics"],
+    ),
+    (
+        [
+            "spec",
+            "size",
+            "material",
+            "compatib",
+            "规格",
+            "尺寸",
+            "材质",
+            "颜色",
+            "顏色",
+            "型号",
+            "参数",
+            "兼容",
+            "咨询",
+            "库存",
+        ],
+        CATEGORY_LABELS["product_consultation"],
+    ),
+    (
+        [
+            "change",
+            "modify",
+            "cancel",
+            "address",
+            "修改",
+            "取消",
+            "改地址",
+            "改订单",
+            "收货地址",
+            "订单信息",
+            "取消订单",
+        ],
+        CATEGORY_LABELS["order_modification"],
+    ),
+    (
+        ["warranty", "repair", "after-sales", "aftersales", "保修", "维修", "售后", "故障", "坏了", "换新", "返修"],
+        CATEGORY_LABELS["warranty_repair"],
+    ),
+    (
+        ["complaint", "angry", "frustrated", "escalat", "投诉", "生气", "不满", "人工", "升级处理", "差评", "处理"],
+        CATEGORY_LABELS["complaint_resolution"],
+    ),
+]
+
+LEGACY_EN_SYSTEM_PROMPT_SIGNATURES = {
+    "youareaprofessionalecommercecustomersupportassistant",
+    "youareaecommercecustomersupportassistant",
+}
+
+TEMPLATE_NOISE_PATTERNS = (
+    re.compile(r"<think>.*?</think>", flags=re.IGNORECASE | re.DOTALL),
+    re.compile(r"#\s*e-[^\s,，。!?？!;；]*", flags=re.IGNORECASE),
+    re.compile(r"#\s*e-s\[[^\]]*\]", flags=re.IGNORECASE),
+    re.compile(r"&nbsp;", flags=re.IGNORECASE),
+    re.compile(r"\[[^\]]*[xX][^\]]*\]"),
+    re.compile(
+        r"\[(?:数字|姓名|电话|手机号|地址|日期|时间|金额|站点|组织机构|机构|订单|快递|Name|name|ORDERID|EMAIL|PHONE|ID)[^\]]*\]"
+    ),
+)
+
+PLACEHOLDER_SIGNATURE_PATTERNS = (
+    re.compile(r"#\s*e-[^\s,，。!?？!;；]*", flags=re.IGNORECASE),
+    re.compile(r"#\s*e-s\[[^\]]*\]", flags=re.IGNORECASE),
+    re.compile(r"\[[^\]]*[xX][^\]]*\]"),
+    re.compile(
+        r"\[(?:数字|姓名|电话|手机号|地址|日期|时间|金额|站点|组织机构|机构|订单|快递|Name|name|ORDERID|EMAIL|PHONE|ID)[^\]]*\]"
+    ),
+)
+
+GENERIC_CLOSING_PHRASES = {
+    "请问还有其他可以帮到您的吗",
+    "请问还有其他还可以帮到您的吗",
+    "请问还有什么可以帮您",
+    "还有其他问题吗",
+    "还有什么问题吗",
+    "感谢您的咨询",
+    "感谢您对京东的支持，祝您生活愉快，再见",
+    "祝您生活愉快",
+    "如有问题随时联系",
+    "谢谢您的支持",
+    "后期有问题再来咨询妹子哦",
+    "没有其他问题妹子就不打扰您了哦",
+    "没有其他问题的话妹子就和您说再见了哦",
+}
+
+LOW_INFORMATION_RESPONSES = {
+    "好的",
+    "好",
+    "好的呢",
+    "好的哦",
+    "嗯",
+    "嗯呢",
+    "恩",
+    "知道了",
+    "收到",
+    "可以",
+    "在的",
+    "没问题",
+    "是的",
+    "是的哦",
+    "是的呢",
+    "好滴",
+    "好的亲",
+    "谢谢",
+    "谢谢您",
+    "新年快乐",
+    "不客气",
+    "不客气的",
+    "您客气了",
+    "您客气了哈",
+    "麻烦您了",
+    "辛苦您等待下哦",
+}
+BUSINESS_SIGNAL_KEYWORDS = [
+    "订单",
+    "退款",
+    "退货",
+    "物流",
+    "发货",
+    "配送",
+    "地址",
+    "售后",
+    "维修",
+    "投诉",
+    "商品",
+    "规格",
+    "库存",
+    "申请",
+    "核实",
+    "提供",
+    "处理",
+    "照片",
+    "工单",
+    "进度",
+    "补发",
+    "order",
+    "refund",
+    "return",
+    "shipping",
+    "delivery",
+]
 
 SFT_KEYS = {
     "id": ["id", "sample_id", "record_id", "uid"],
@@ -128,11 +315,99 @@ def _string_text(value: Any) -> str:
     return ""
 
 
-def _strip_jddc_placeholders(value: str) -> str:
+def _compact_text(value: str) -> str:
+    compact: list[str] = []
+    for ch in value.lower():
+        if ch.isspace():
+            continue
+        category = unicodedata.category(ch)
+        if category and category[0] in {"P", "S"}:
+            continue
+        compact.append(ch)
+    return "".join(compact)
+
+
+GENERIC_CLOSING_SIGNATURES = {_compact_text(text) for text in GENERIC_CLOSING_PHRASES}
+LOW_INFORMATION_SIGNATURES = {_compact_text(text) for text in LOW_INFORMATION_RESPONSES}
+GENERIC_CLOSING_REGEXES = (
+    re.compile(r"^请问还有.*帮.*您.*吗[?？]*$"),
+    re.compile(r"^还有.*问题.*吗[?？]*$"),
+    re.compile(r"^感谢.*支持.*(再见|愉快).*$"),
+    re.compile(r"^后期有问题再来咨询.*$"),
+    re.compile(r"^没有.*问题.*(不打扰|再见).*$"),
+    re.compile(r"^如有问题.*联系.*$"),
+)
+COURTESY_TEMPLATE_REGEXES = (
+    re.compile(r"^很高兴遇到您.*帮到您.*吗[?？]*$"),
+    re.compile(r"^您.*客气.*$"),
+    re.compile(r"^不客气.*$"),
+    re.compile(r"^缘聚缘散缘如水.*$"),
+    re.compile(r"^还辛苦您.*评价.*$"),
+    re.compile(r"^妹子.*评价.*$"),
+    re.compile(r"^遇到像您这样.*评价.*$"),
+    re.compile(r"^祝您[:：]?.*(开心|愉快).*$"),
+)
+
+
+def _strip_template_noise(value: str) -> str:
     text = _text(value)
-    text = re.sub(r"#?e-s\[[^\]]*\]", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"\[[a-z_]+\w*\]", "", text, flags=re.IGNORECASE)
+    for pattern in TEMPLATE_NOISE_PATTERNS:
+        text = pattern.sub(" ", text)
     return _text(text)
+
+
+def _strip_jddc_placeholders(value: str) -> str:
+    return _strip_template_noise(value)
+
+
+def _clean_text(value: Any) -> str:
+    return _strip_template_noise(_text(value))
+
+
+def _has_placeholder_signature(value: str) -> bool:
+    text = _text(value)
+    return any(pattern.search(text) for pattern in PLACEHOLDER_SIGNATURE_PATTERNS)
+
+
+def _is_generic_closing_only(value: str) -> bool:
+    compact = _compact_text(value)
+    if not compact:
+        return False
+    if compact in GENERIC_CLOSING_SIGNATURES:
+        return True
+    text = _clean_text(value)
+    if any(pattern.match(text) for pattern in GENERIC_CLOSING_REGEXES):
+        return True
+    if any(pattern.match(text) for pattern in COURTESY_TEMPLATE_REGEXES):
+        return True
+    if "评价" in text and not _has_business_signal(text):
+        return True
+    if not _has_business_signal(text) and any(token in text for token in ["客气", "愉快", "开心", "谢谢", "亲爱", "妹子"]):
+        return True
+    return False
+
+
+def _is_low_information_response(value: str) -> bool:
+    compact = _compact_text(value)
+    if not compact:
+        return False
+    if compact in LOW_INFORMATION_SIGNATURES:
+        return True
+    return len(compact) <= 6 and not _has_business_signal(value)
+
+
+def _has_business_signal(value: str) -> bool:
+    text = _clean_text(value).lower()
+    return any(keyword in text for keyword in BUSINESS_SIGNAL_KEYWORDS)
+
+
+def _resolve_system_prompt(value: Any) -> str:
+    prompt = _clean_text(value)
+    if not _is_usable_text(prompt):
+        return SYSTEM_PROMPT
+    if _compact_text(prompt) in LEGACY_EN_SYSTEM_PROMPT_SIGNATURES:
+        return SYSTEM_PROMPT
+    return prompt
 
 
 def _has_substantive_char(value: str) -> bool:
@@ -162,7 +437,12 @@ def _is_usable_text(value: Any) -> bool:
 
 def _category(value: Any) -> str:
     token = _text(value).lower().replace("-", "_").replace("/", "_").replace(" ", "_")
-    return CATEGORY_ALIASES.get(token, "")
+    if token in CATEGORY_ALIASES:
+        return CATEGORY_ALIASES[token]
+    for alias, label in CATEGORY_ALIASES.items():
+        if alias and alias in token:
+            return label
+    return ""
 
 
 def _pick(raw: Mapping[str, Any], keys: list[str], default: Any = None) -> Any:
@@ -233,16 +513,8 @@ def _rejected(raw: Mapping[str, Any], line_no: int, errors: list[str], source_na
 
 
 def _infer_category_from_text(value: str) -> str:
-    text = value.lower()
-    rules = [
-        (["refund", "return", "rma", "退款", "退货", "换货", "补偿", "价保"], "returns_refunds"),
-        (["shipping", "delivery", "logistics", "tracking", "物流", "发货", "快递", "配送", "运单", "签收", "催单"], "shipping_logistics"),
-        (["spec", "size", "material", "compatib", "规格", "尺寸", "材质", "型号", "参数", "兼容", "咨询"], "product_specs"),
-        (["change", "modify", "cancel", "address", "修改", "取消", "改地址", "改订单", "收货地址", "订单信息"], "order_modification"),
-        (["warranty", "repair", "after-sales", "aftersales", "保修", "维修", "售后", "故障", "坏了", "换新"], "after_sales"),
-        (["complaint", "angry", "frustrated", "escalat", "投诉", "生气", "不满", "人工", "升级处理", "差评"], "complaint_soothing"),
-    ]
-    for keywords, category in rules:
+    text = _clean_text(value).lower()
+    for keywords, category in CATEGORY_INFERENCE_RULES:
         if any(keyword in text for keyword in keywords):
             return category
     return ""
@@ -288,11 +560,12 @@ def _turn_role(turn: Any) -> str:
 
 def _turn_text(turn: Any) -> str:
     if isinstance(turn, Mapping):
-        return _string_text(_pick(turn, ["text", "content", "utterance", "sentence", "msg", "message"]))
+        value = _pick(turn, ["text", "content", "utterance", "sentence", "msg", "message"])
+        return _clean_text(value) if isinstance(value, str) else ""
     if isinstance(turn, list) and len(turn) >= 2:
-        return _string_text(turn[1])
+        return _clean_text(turn[1]) if isinstance(turn[1], str) else ""
     if isinstance(turn, str):
-        return _text(turn)
+        return _clean_text(turn)
     return ""
 
 
@@ -397,24 +670,25 @@ def _normalize_external_sft(
             raise ValueError("jddc: malformed dialogue (<2 usable turns)")
         raise ValueError(f"{source_format}: missing response text")
 
-    query = _text(query)
-    response = _text(response)
+    query = _clean_text(query)
+    input_text = _clean_text(input_text)
+    response = _clean_text(response)
 
     category_value = _pick_text(raw, ["category", "intent", "topic", "domain", "scene", "label"])
     category = _category(category_value)
     if not category:
         category = _infer_category_from_text(f"{query}\n{input_text}\n{response}")
     if not category and source_format == "faq":
-        category = "product_specs"
+        category = FAQ_DEFAULT_CATEGORY
     if not category:
         # Keep recoverable rows instead of dropping Chinese JDDC records on taxonomy misses.
-        category = "general"
+        category = FALLBACK_CATEGORY
 
     source_id = _text(_pick(raw, ["source_id", "original_id", "ticket_id", "dialog_id", "session_id"])) or record_id
     return {
         "id": record_id or f"{source_format}_{line_no:08d}",
         "category": category,
-        "system": _text(_pick(raw, ["system", "system_prompt", "sys_prompt"], SYSTEM_PROMPT)) or SYSTEM_PROMPT,
+        "system": _resolve_system_prompt(_pick(raw, ["system", "system_prompt", "sys_prompt"], SYSTEM_PROMPT)),
         "query": query,
         "input": input_text,
         "response": response,
@@ -424,35 +698,81 @@ def _normalize_external_sft(
 
 
 def _parse_sft(raw: Mapping[str, Any], source_name: str) -> tuple[dict[str, Any], list[str]]:
+    raw_instruction = _pick(raw, SFT_KEYS["instruction"])
+    raw_input = _pick(raw, SFT_KEYS["input"], "")
+    raw_output = _pick(raw, SFT_KEYS["output"])
+    instruction = _clean_text(raw_instruction)
+    input_text = _clean_text(raw_input)
+    output = _clean_text(raw_output)
+    category = _category(_pick(raw, SFT_KEYS["category"]))
+    if not category:
+        category = _infer_category_from_text(f"{instruction}\n{input_text}\n{output}")
+    if not category:
+        category = FALLBACK_CATEGORY
+
     record = {
         "id": _text(_pick(raw, SFT_KEYS["id"])),
-        "category": _category(_pick(raw, SFT_KEYS["category"])),
-        "system": _text(_pick(raw, SFT_KEYS["system"], SYSTEM_PROMPT)),
-        "instruction": _text(_pick(raw, SFT_KEYS["instruction"])),
-        "input": _text(_pick(raw, SFT_KEYS["input"], "")),
-        "output": _text(_pick(raw, SFT_KEYS["output"])),
+        "category": category,
+        "system": _resolve_system_prompt(_pick(raw, SFT_KEYS["system"], SYSTEM_PROMPT)),
+        "instruction": instruction,
+        "input": input_text,
+        "output": output,
         "source": _text(_pick(raw, SFT_KEYS["source"], source_name)) or source_name,
         "source_id": _text(_pick(raw, SFT_KEYS["source_id"], "")),
     }
     errors = _require_text(record, ["id", "category", "system", "instruction", "input", "output"], {"input"})
     if record["category"] not in CATEGORIES:
         errors.append(f"category: unsupported `{record['category']}`")
+    if not _is_usable_text(record["instruction"]):
+        errors.append("instruction: must be substantive text")
+    if not _is_usable_text(record["output"]):
+        errors.append("output: must be substantive text")
+    if _has_placeholder_signature(_text(raw_output)) and not _is_usable_text(record["output"]):
+        errors.append("output: placeholder/template garbage")
+    if _is_generic_closing_only(record["output"]):
+        errors.append("output: generic closing only")
+    if _is_low_information_response(record["output"]):
+        errors.append("output: low-information response")
     return record, errors
 
 
 def _parse_pref(raw: Mapping[str, Any], source_name: str) -> tuple[dict[str, Any], list[str]]:
+    raw_prompt = _pick(raw, PREF_KEYS["prompt"])
+    raw_chosen = _pick(raw, PREF_KEYS["chosen"])
+    raw_rejected = _pick(raw, PREF_KEYS["rejected"])
+    prompt = _clean_text(raw_prompt)
+    chosen = _clean_text(raw_chosen)
+    rejected = _clean_text(raw_rejected)
+    category = _category(_pick(raw, PREF_KEYS["category"]))
+    if not category:
+        category = _infer_category_from_text(f"{prompt}\n{chosen}\n{rejected}")
+    if not category:
+        category = FALLBACK_CATEGORY
+
     record = {
         "id": _text(_pick(raw, PREF_KEYS["id"])),
-        "category": _category(_pick(raw, PREF_KEYS["category"])),
-        "prompt": _text(_pick(raw, PREF_KEYS["prompt"])),
-        "chosen": _text(_pick(raw, PREF_KEYS["chosen"])),
-        "rejected": _text(_pick(raw, PREF_KEYS["rejected"])),
+        "category": category,
+        "prompt": prompt,
+        "chosen": chosen,
+        "rejected": rejected,
         "source": _text(_pick(raw, PREF_KEYS["source"], source_name)) or source_name,
         "source_id": _text(_pick(raw, PREF_KEYS["source_id"], "")),
     }
     errors = _require_text(record, ["id", "category", "prompt", "chosen", "rejected"])
     if record["category"] not in CATEGORIES:
         errors.append(f"category: unsupported `{record['category']}`")
+    if not _is_usable_text(record["prompt"]):
+        errors.append("prompt: must be substantive text")
+    if not _is_usable_text(record["chosen"]):
+        errors.append("chosen: must be substantive text")
+    if not _is_usable_text(record["rejected"]):
+        errors.append("rejected: must be substantive text")
+    if _has_placeholder_signature(_text(raw_chosen)) and not _is_usable_text(record["chosen"]):
+        errors.append("chosen: placeholder/template garbage")
+    if _is_generic_closing_only(record["chosen"]):
+        errors.append("chosen: generic closing only")
+    if _is_low_information_response(record["chosen"]):
+        errors.append("chosen: low-information response")
     if record["chosen"].strip() == record["rejected"].strip():
         errors.append("chosen/rejected: chosen and rejected must differ")
     return record, errors

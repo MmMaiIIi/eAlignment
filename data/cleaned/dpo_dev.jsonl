@@ -1,0 +1,1 @@
+{"id": "raw_pref_004", "category": "订单修改", "prompt": "Customer: Can I change my address after payment?", "chosen": "Please send your order number and new address. If shipment has not started, I can help request a change.", "rejected": "Too late, deal with it.", "source": "mock_platform_a", "source_id": "pref_2004"}

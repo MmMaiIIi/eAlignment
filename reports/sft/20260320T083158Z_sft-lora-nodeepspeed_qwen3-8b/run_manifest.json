@@ -1,0 +1,58 @@
+{
+  "run_name": "20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b",
+  "created_at_utc": "20260320T083158Z",
+  "profile_or_config": "sft_lora_nodeepspeed",
+  "source_config_path": "configs/sft_lora_nodeepspeed.yaml",
+  "artifacts_dir": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b",
+  "launch_command": "llamafactory-cli train configs/sft_lora_nodeepspeed.yaml",
+  "paths": {
+    "launch_command_file": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/launch_command.txt",
+    "config_snapshot_file": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/config_snapshot.yaml",
+    "console_log_file": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/console.log",
+    "training_log_file": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/training_log.jsonl",
+    "trainer_state_file": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/trainer_state.json",
+    "checkpoint_pointer_file": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/checkpoint_dirs.txt",
+    "tensorboard_pointer_file": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/tensorboard_event_files.txt",
+    "loss_curve_png": "reports/loss_curve_20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b.png",
+    "loss_curve_json": "reports/loss_curve_20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b.json",
+    "summary_markdown": "reports/sft_run_summary_20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b.md",
+    "before_cache": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/before_outputs.jsonl",
+    "before_after": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/before_after.jsonl"
+  },
+  "runtime": {
+    "model_name_or_path": "Qwen/Qwen3-8B",
+    "dataset": "ecom_sft_seed",
+    "dataset_dir": "data/processed",
+    "output_dir": "/root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed",
+    "num_train_epochs": "2.0",
+    "learning_rate": "1.0e-4",
+    "seed": "42",
+    "finetuning_type": "lora",
+    "lora_rank": "8",
+    "lora_alpha": "16",
+    "lora_dropout": "0.05",
+    "lora_target": "all",
+    "logging_steps": "500",
+    "save_steps": "2000",
+    "report_to": "tensorboard",
+    "logging_dir": "/root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed/tensorboard",
+    "training_log_source": "/root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed/trainer_log.jsonl"
+  },
+  "checkpoints": {
+    "directories": [
+      "/root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed/checkpoint-2000",
+      "/root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed/checkpoint-4000",
+      "/root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed/checkpoint-4376"
+    ]
+  },
+  "tensorboard": {
+    "event_files": [
+      "/root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed/tensorboard/events.out.tfevents.1773995564.autodl-container-6f63409f26-65cd5ece.6465.0"
+    ]
+  },
+  "comparison": {
+    "prompts_path": "data/synthetic/sft_eval_prompts.jsonl",
+    "before_cache_path": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/before_outputs.jsonl",
+    "before_after_artifact": "runs/artifacts/sft/20260320T083158Z_sft-lora-nodeepspeed_qwen3-8b/before_after.jsonl"
+  }
+}

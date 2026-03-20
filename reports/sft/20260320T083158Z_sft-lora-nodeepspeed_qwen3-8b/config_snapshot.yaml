@@ -1,0 +1,32 @@
+stage: sft
+do_train: true
+model_name_or_path: Qwen/Qwen3-8B
+template: qwen
+finetuning_type: lora
+
+dataset: ecom_sft_seed
+dataset_dir: data/processed
+cutoff_len: 2048
+
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target: all
+
+learning_rate: 1.0e-4
+num_train_epochs: 2.0
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+optim: adamw_torch
+fp16: true
+seed: 42
+
+logging_steps: 500
+save_steps: 2000
+report_to: tensorboard
+logging_dir: /root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed/tensorboard
+plot_loss: true
+output_dir: /root/autodl-tmp/outputs/sft/qwen3_8b_lora_nodeepspeed
+  

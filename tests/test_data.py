@@ -52,6 +52,15 @@ def test_prepare_data_and_pref_smoke(tmp_path: Path) -> None:
     sft_rej = read_jsonl(sft_rejected)
     dpo_rej = read_jsonl(dpo_rejected)
     quality = json.loads(dpo_quality.read_text(encoding="utf-8"))
+    legacy_categories = {
+        "returns_refunds",
+        "shipping_logistics",
+        "product_specs",
+        "order_modification",
+        "after_sales",
+        "complaint_soothing",
+        "general",
+    }
 
     assert len(sft_train) >= 1
     assert len(dpo_train) >= 1
@@ -60,6 +69,8 @@ def test_prepare_data_and_pref_smoke(tmp_path: Path) -> None:
     assert quality["dataset"] == "dpo"
     assert "issue_counts" in quality
     assert dataset_info.exists()
+    assert all(row["category"] not in legacy_categories for row in sft_train + dpo_train)
+    assert all("中文电商客服助手" in row["system"] for row in sft_train)
 
 
 def test_prepare_data_external_source_formats(tmp_path: Path) -> None:
@@ -279,13 +290,13 @@ def test_prepare_data_jddc_contract_categories_and_rejections(tmp_path: Path) ->
     assert {row["id"] for row in sft_dev}.isdisjoint({row["id"] for row in sft_test})
 
     by_id = {row["id"]: row for row in sft_all}
-    assert by_id["jd_ship_role"]["category"] == "shipping_logistics"
-    assert by_id["jd_alias_refund"]["category"] == "returns_refunds"
-    assert by_id["jd_list_specs"]["category"] == "product_specs"
-    assert by_id["jd_modify_context"]["category"] == "order_modification"
-    assert by_id["jd_warranty"]["category"] == "after_sales"
-    assert by_id["jd_complaint"]["category"] == "complaint_soothing"
-    assert by_id["jd_bad_category"]["category"] == "general"
+    assert by_id["jd_ship_role"]["category"] == "物流配送"
+    assert by_id["jd_alias_refund"]["category"] == "退货退款"
+    assert by_id["jd_list_specs"]["category"] == "商品咨询"
+    assert by_id["jd_modify_context"]["category"] == "订单修改"
+    assert by_id["jd_warranty"]["category"] == "售后维修"
+    assert by_id["jd_complaint"]["category"] == "投诉处理"
+    assert by_id["jd_bad_category"]["category"] == "通用客服"
 
     assert by_id["jd_modify_context"]["instruction"] == "Please change my address."
     assert by_id["jd_modify_context"]["input"] == "user: Hi assistant: Hello, how can I help?"
@@ -403,17 +414,25 @@ def test_prepare_data_jddc_relaxed_chinese_acceptance_and_quality_guards(tmp_pat
     rejected = read_jsonl(rejected_path)
     by_id = {row["id"]: row for row in sft_all}
 
-    assert len(sft_all) == 5
-    assert len(rejected) == 2
+    assert len(sft_all) == 2
+    assert len(rejected) == 5
 
-    assert by_id["cn_refund"]["category"] == "returns_refunds"
-    assert by_id["cn_shipping"]["category"] == "shipping_logistics"
-    assert by_id["cn_general_fallback"]["category"] == "general"
-    assert by_id["short_reply_ok"]["output"] == "可以的"
-    assert by_id["recover_pair_with_malformed_turns"]["output"] == "稍等"
+    assert by_id["cn_refund"]["category"] == "退货退款"
+    assert by_id["cn_shipping"]["category"] == "物流配送"
 
     rejected_by_session = {row["raw"].get("session_id"): row for row in rejected}
-    assert set(rejected_by_session) == {"bad_single_turn", "bad_punctuation_reply"}
+    assert set(rejected_by_session) == {
+        "cn_general_fallback",
+        "recover_pair_with_malformed_turns",
+        "short_reply_ok",
+        "bad_single_turn",
+        "bad_punctuation_reply",
+    }
+    assert any("output: low-information response" in err for err in rejected_by_session["cn_general_fallback"]["errors"])
+    assert any(
+        "output: low-information response" in err for err in rejected_by_session["recover_pair_with_malformed_turns"]["errors"]
+    )
+    assert any("output: low-information response" in err for err in rejected_by_session["short_reply_ok"]["errors"])
     assert any(
         "normalize: jddc: malformed dialogue (<2 usable turns)" in err
         for err in rejected_by_session["bad_single_turn"]["errors"]
@@ -422,3 +441,60 @@ def test_prepare_data_jddc_relaxed_chinese_acceptance_and_quality_guards(tmp_pat
         "normalize: jddc: malformed dialogue (<2 usable turns)" in err
         for err in rejected_by_session["bad_punctuation_reply"]["errors"]
     )
+
+
+def test_prepare_data_localizes_system_prompt_and_filters_template_garbage(tmp_path: Path) -> None:
+    rows = [
+        {
+            "id": "keep_cn_system",
+            "category": "returns_refunds",
+            "system": "You are a professional e-commerce customer support assistant.",
+            "instruction": "这个商品可以退货吗？",
+            "input": "",
+            "output": "可以的，您可以发起退货申请。",
+        },
+        {
+            "id": "drop_template_output",
+            "category": "shipping_logistics",
+            "system": "You are a professional e-commerce customer support assistant.",
+            "instruction": "物流还没更新",
+            "input": "",
+            "output": "#E-s[数字x] [姓名x]",
+        },
+    ]
+    raw_path = tmp_path / "localized_cleaning.jsonl"
+    raw_path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
+
+    out_dir = tmp_path / "processed"
+    rejected_path = tmp_path / "interim" / "sft_rejected.jsonl"
+    dataset_info = out_dir / "dataset_info.json"
+
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/prepare_data.py",
+            "--profile",
+            "smoke",
+            "--input",
+            str(raw_path),
+            "--output-dir",
+            str(out_dir),
+            "--rejected-path",
+            str(rejected_path),
+            "--dataset-info",
+            str(dataset_info),
+            "--source-format",
+            "internal",
+        ],
+        check=True,
+    )
+
+    sft_all = read_jsonl(out_dir / "sft_all.jsonl")
+    rejected = read_jsonl(rejected_path)
+
+    assert len(sft_all) == 1
+    assert sft_all[0]["id"] == "keep_cn_system"
+    assert sft_all[0]["system"] == "你是一名专业的中文电商客服助手。请基于用户问题和上下文，提供准确、礼貌、清晰、可执行的回复，避免编造信息。"
+    assert sft_all[0]["category"] == "退货退款"
+    assert len(rejected) == 1
+    assert rejected[0]["raw"]["id"] == "drop_template_output"
