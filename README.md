@@ -128,6 +128,12 @@ python scripts/prepare_data.py --profile sft --input data/raw/merged_sft.jsonl -
 python scripts/prepare_data.py --profile sft --input data/raw/jddc_sft.jsonl --source-format jddc --source-name jddc
 python scripts/prepare_data.py --profile sft --input data/raw/ecd_sft.jsonl --source-format ecd --source-name ecd
 python scripts/prepare_data.py --profile sft --input data/raw/faq_sft.jsonl --source-format faq --source-name faq
+
+python scripts/prepare_data.py \
+  --profile sft \
+  --input data/raw/jddc.jsonl \
+  --source-format jddc \
+  --source-name jddc_local
 ```
 
 Preference:
