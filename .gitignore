@@ -42,6 +42,7 @@ runs/artifacts/
 *.log.*
 *.out
 *.err
+*.zip
 
 # Data (local-only)
 data/
