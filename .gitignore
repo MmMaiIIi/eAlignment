@@ -51,7 +51,7 @@ data/processed/*.parquet
 # Data (local-only)
 data/raw/
 data/interim/
-data/processed/
+# data/processed/
 data/synthetic/
 data/JDDC-Baseline-Seq2Seq-master/
 
